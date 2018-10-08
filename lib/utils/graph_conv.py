@@ -211,12 +211,12 @@ def pooling_conv_kernel(input, layer_conf, nout, name):
     layer = 0
     adder.in_layer_offset = 0
     adder.out_layer_offset = 0
-    for itype in range(3):
+    for itype in range(4):
         # geometry of the output layer
         if itype == 0:
             outtype = 2
             base = 2
-        elif itype == 1 or itype == 2:
+        else:
             outtype = 3
             base = 1
 
@@ -229,7 +229,7 @@ def pooling_conv_kernel(input, layer_conf, nout, name):
 
         # iterate over input layers
         while layer - sum(layer_conf[:itype]) < layer_conf[itype]:
-            if itype % 2 == 0:
+            if itype == 0 or itype == 2:
                 for i in range(nleft):
                     adder.out_index = i
 
@@ -280,7 +280,7 @@ def pooling_conv_kernel(input, layer_conf, nout, name):
                     adder.add(incol1 * nincol + inrow0 + ninlarge, 'Srb')
                     adder.add(incol1 * nincol + inrow1 + ninlarge, 'Srt')
 
-            else:
+            elif itype == 1:
                 for i in range(nleft):
                     adder.out_index = i
 
@@ -351,6 +351,17 @@ def pooling_conv_kernel(input, layer_conf, nout, name):
                     adder.add(incol2 * nincol + inrow0 + ninlarge, 'Srb')
                     adder.add(incol2 * nincol + inrow1 + ninlarge, 'Sright')
                     adder.add(incol2 * nincol + inrow2 + ninlarge, 'Srt')
+
+            else:
+                for i in range(nlarge):
+                    adder.out_index = i
+                    
+                    adder.add(i, 'Lself')
+            
+                for i in range(nlarge, ntotal):
+                    adder.out_index = i
+                    
+                    adder.add(i, 'Sself')
                     
             adder.in_layer_offset += layer_sizes[itype]
             adder.out_layer_offset += layer_sizes[outtype]
@@ -385,3 +396,23 @@ def pooling_conv(input, layer_conf, nout, name):
     x = tf.reshape(x, [batch_size, -1, nout])
 
     return x, out_layer_conf
+
+
+def pool_z(input, nout):
+    """
+    Reduce the number of z layers for an input where all z layers are reduced to type 3.
+    """
+
+    batch_size = input.shape[0]
+
+    x = tf.reshape(input, [batch_size, -1, layer_sizes[3], input.shape[-1]])
+    x = tf.transpose(x, perm=[0, 2, 1, 3])
+    x = tf.reshape(input, [batch_size * layer_sizes[3], -1, input.shape[-1]])
+
+    x = tf.layers.conv1d(x, nout, [input.shape[-1] * 2], strides=[input.shape[-1] * 2], padding='same')
+
+    x = tf.reshape(x, [batch_size, layer_sizes[3], -1, nout])
+    x = tf.transpose(x, perm=[0, 2, 1, 3])
+    x = tf.reshape(x, [batch_size, -1, nout])
+
+    return x

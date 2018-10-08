@@ -18,28 +18,28 @@ class BinnedESum3DConvModel(ClassificationModel):
 
         with tf.variable_scope(self.variable_scope):
             x = tf.layers.conv3d(x, 25, [1, 3, 3], activation=tf.nn.relu, padding='same')
-            x = tf.layers.conv3d(x, 18, [5, 1, 1], activation=tf.nn.relu, padding='same')
+            x = tf.layers.conv3d(x, 18, [2, 1, 1], activation=tf.nn.relu, padding='same')
 
             x = tf.layers.conv3d(x, 18, [1, 3, 3], activation=tf.nn.relu, padding='same')
-            x = tf.layers.conv3d(x, 18, [5, 1, 1], activation=tf.nn.relu, padding='same')
+            x = tf.layers.conv3d(x, 18, [2, 1, 1], activation=tf.nn.relu, padding='same')
 
             x = tf.layers.conv3d(x, 18, [1, 3, 3], activation=tf.nn.relu, padding='same')
-            x = tf.layers.conv3d(x, 18, [5, 1, 1], activation=tf.nn.relu, padding='same')
+            x = tf.layers.conv3d(x, 18, [2, 1, 1], activation=tf.nn.relu, padding='same')
 
-            x = tf.layers.max_pooling3d(x, [2, 2, 2], strides=2) # 10, 10, 12
-
-            x = tf.layers.conv3d(x, 18, [1, 3, 3], activation=tf.nn.relu, padding='same')
-            x = tf.layers.conv3d(x, 18, [5, 1, 1], activation=tf.nn.relu, padding='same')
-
-            x = tf.layers.max_pooling3d(x, [2, 2, 2], strides=2) # 5, 5, 6
+            x = tf.layers.max_pooling3d(x, [2, 2, 2], strides=2) # 8, 8, 13, 18
 
             x = tf.layers.conv3d(x, 18, [1, 3, 3], activation=tf.nn.relu, padding='same')
-            x = tf.layers.conv3d(x, 18, [5, 1, 1], activation=tf.nn.relu, padding='same')
+            x = tf.layers.conv3d(x, 18, [2, 1, 1], activation=tf.nn.relu, padding='same')
 
-            x = tf.layers.max_pooling3d(x, [2, 2, 2], strides=2) # 2, 2, 3
+            x = tf.layers.max_pooling3d(x, [2, 2, 2], strides=2) # 4, 4, 7, 18
+
+            x = tf.layers.conv3d(x, 18, [1, 3, 3], activation=tf.nn.relu, padding='same')
+            x = tf.layers.conv3d(x, 18, [2, 1, 1], activation=tf.nn.relu, padding='same')
+
+            x = tf.layers.max_pooling3d(x, [2, 2, 2], strides=2) # 2, 2, 4, 18
 
             x = tf.layers.conv3d(x, 18, [1, 2, 2], activation=tf.nn.relu, padding='same')
-            x = tf.layers.conv3d(x, 18, [3, 1, 1], activation=tf.nn.relu, padding='same')
+            x = tf.layers.conv3d(x, 18, [2, 1, 1], activation=tf.nn.relu, padding='same')
 
             flattened_features = tf.reshape(x, (self.batch_size, -1))
 
