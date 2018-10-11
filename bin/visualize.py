@@ -1,11 +1,20 @@
 #!/usr/bin/env python
 
 import sys
+from argparse import ArgumentParser
+
+parser = ArgumentParser(description='Visualize')
+parser.add_argument('input', help="Path to input tree")
+parser.add_argument('selection', nargs = '?', help="Selection")
+
+args = parser.parse_args()
+
+sys.argv = []
 
 import ROOT
 import root_numpy as rnp
 
-source = ROOT.TFile.Open(sys.argv[1])
+source = ROOT.TFile.Open(args.input)
 tree = source.Get('B4')
 
 feature_branches = [
@@ -20,17 +29,21 @@ feature_branches = [
 ]
 num_features = len(feature_branches)
 
+#label_branches = [
+#    'isElectron',
+#    'isPionCharged',
+#    'isMuon',
+#    'isPionNeutral',
+#    'isK0Long',
+#    'isK0Short'
+#]
 label_branches = [
-    'isElectron',
-    'isPionCharged',
-    'isMuon',
-    'isPionNeutral',
-    'isK0Long',
-    'isK0Short'
+    'isGamma',
+    'isPionNeutral'
 ]
 num_labels = len(label_branches)
 
-full_array = rnp.tree2array(tree, feature_branches + label_branches)
+full_array = rnp.tree2array(tree, feature_branches + label_branches, args.selection)
 
 grid = ROOT.TH3D('grid', '', 125, 0., 1875., 32, -150., 150., 32, -150., 150.) # using graphical X axis for Z to make visualization easier
 canvas = ROOT.TCanvas('c1', 'c1', 800, 800)

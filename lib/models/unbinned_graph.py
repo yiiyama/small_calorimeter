@@ -1,7 +1,7 @@
 import tensorflow as tf
 import numpy as np
 from models.classification import ClassificationModel
-from utils.graph_conv import nearest_neighbor_conv, pooling_conv, pool_z
+from utils.graph_conv_weightwise import nearest_neighbor_conv, pooling_conv, pool_z
 
 MAXHITS = 2679
 NUM_FEATURES = 9
@@ -23,42 +23,42 @@ class UnbinnedGraphModel(ClassificationModel):
 
         with tf.variable_scope(self.variable_scope):
             print('layer0')
-            x = nearest_neighbor_conv(x, layer_conf, 8, 'layer0')
-            # all layers now have the same geometry
+            x = nearest_neighbor_conv(x, layer_conf, 32, 'layer0')
+
             print('layer0_x', x.shape)
             print('layer1')
-            x = nearest_neighbor_conv(x, layer_conf, 4, 'layer1')
+            x = nearest_neighbor_conv(x, layer_conf, 32, 'layer1')
             print('layer1_x', x.shape)
             print('layer2')
-            x = nearest_neighbor_conv(x, layer_conf, 4, 'layer2')
+            x = nearest_neighbor_conv(x, layer_conf, 32, 'layer2')
             print('layer2_x', x.shape)
 
             print('layer3')
             # reduce the size of representation by reductive convolution rather than pooling
-            x, layer_conf = pooling_conv(x, layer_conf, 4, 'layer3')
+            x, layer_conf = pooling_conv(x, layer_conf, 16, 'layer3')
             print('layer3_x', x.shape)
             print('layer3_conf', layer_conf)
 
             print('layer4')
-            x, layer_conf = pooling_conv(x, layer_conf, 4, 'layer4')
+            x, layer_conf = pooling_conv(x, layer_conf, 16, 'layer4')
             print('layer4_x', x.shape)
             print('layer4_conf', layer_conf)
 
             # all layers now have the same geometry
 
-            x = pool_z(x, 4) # 13 * 19 * 4
+            x = pool_z(x, 16) # 13 * 19 * 16
 
             print('layer5_x', x.shape)
 
-            x = pool_z(x, 4) # 7 * 19 * 4
+            x = pool_z(x, 16) # 7 * 19 * 16
 
             print('layer6_x', x.shape)
 
             x = tf.reshape(x, (self.batch_size, -1))
-            print('flattened_shape', x)
+            print('flattened_shape', x.shape)
 
-            x = tf.layers.dense(x, units=30, activation=tf.nn.relu)
-            x = tf.layers.dense(x, units=30, activation=tf.nn.relu)
+            x = tf.layers.dense(x, units=128, activation=tf.nn.relu)
+            x = tf.layers.dense(x, units=128, activation=tf.nn.relu)
             x = tf.layers.dense(x, units=self.num_classes, activation=None) # (Batch, Classes)
 
             self.logits = x

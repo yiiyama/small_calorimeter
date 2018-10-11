@@ -25,8 +25,8 @@ import conversion
 converter = getattr(conversion, args.converter)()
 converter.init_convert()
 
-tree = ROOT.TChain('B4')
-tree.Add(args.input)
+source = ROOT.TFile.Open(args.input)
+tree = source.Get('B4')
 
 feature_branches = [
     'rechit_energy',
@@ -36,26 +36,28 @@ feature_branches = [
     'rechit_layer',
     'rechit_varea',
     'rechit_vxy',
-    'rechit_vz',
-    'rechit_detid'
+    'rechit_vz'
 ]
+if tree.GetBranch('rechit_detid'):
+    feature_branches.append('rechit_detid')
+
 num_features = len(feature_branches)
 
 label_branches = [
     'isElectron',
-    'isPionCharged'
+    'isPionNeutral'
 ]
 if not args.epi_filter:
     label_branches += [
         'isMuon',
-        'isPionNeutral',
+        'isPionCharged',
         'isK0Long',
         'isK0Short'
     ]
 num_labels = len(label_branches)
 
 if args.epi_filter:
-    selection = 'isElectron || isPionCharged'
+    selection = 'isElectron || isPionNeutral'
 else:
     selection = None
 

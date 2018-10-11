@@ -2,6 +2,7 @@ import os
 import importlib
 import configparser as cp
 import tensorflow as tf
+from tensorflow.python.client import timeline
 
 def read_config(config_file_path, config_name):
     config_file = cp.ConfigParser()
@@ -176,7 +177,11 @@ class Trainer(object):
     def debug(self, trained = False):
         print('Initializing model')
 
+        self.model.batch_size = 5
+
         self.initialize()
+
+        print('Parameter count:', get_num_parameters(self.model.variable_scope))
 
         print('Constructing input feeds')
 
@@ -198,6 +203,17 @@ class Trainer(object):
             for tag, tensor in self.model.debug:
                 res, = sess.run([tensor], feed_dict = feed_dict)
                 print(tag, '=', res)
+
+            options = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
+            run_metadata = tf.RunMetadata()
+            loss, _ = sess.run([self.model.loss, self.model.optimizer],
+                               options=options, run_metadata=run_metadata, feed_dict=feed_dict)
+
+            fetched_timeline = timeline.Timeline(run_metadata.step_stats)
+            chrome_trace = fetched_timeline.generate_chrome_trace_format()
+            with open('/afs/cern.ch/user/y/yiiyama/www/smallcalo_debug.json', 'w') as out:
+                out.write(chrome_trace)
+
 
     def get_one_input(self):
         inputs_feed = self.get_input_feeds(self.training_files)

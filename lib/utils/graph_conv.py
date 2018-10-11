@@ -50,7 +50,7 @@ class AddWeight(object):
                         continue
 
                     full_indices = []
-                    for idxin, idxout in indices:
+                    for idxout, idxin in indices:
                         full_indices.append((idxout * self.nout + iout, idxin * self.nin + iin))
 
                     values = tf.tile(self.weights[iout][iin][wn], [len(full_indices)])
@@ -176,14 +176,14 @@ def nearest_neighbor_conv(input, layer_conf, nout, name):
     bias = tf.get_variable('%s_bias' % name, shape = [nout], trainable = True, initializer = tf.zeros_initializer())
 
     x = tf.reshape(input, [batch_size, -1])
-    xs = []
-    for x in tf.split(x, batch_size, 0):
-        x = tf.transpose(x, perm=[1, 0])
-        x = tf.sparse_tensor_dense_matmul(kernel, x)
-        x = tf.transpose(x, perm=[1, 0])
-        xs.append(x)
+    ys = []
+    for y in tf.split(x, batch_size, 0):
+        y = tf.transpose(y, perm=[1, 0])
+        y = tf.sparse_tensor_dense_matmul(kernel, y)
+        y = tf.transpose(y, perm=[1, 0])
+        ys.append(y)
 
-    x = tf.concat(xs, axis=0)
+    x = tf.concat(ys, axis=0)
     x = tf.reshape(x, [batch_size, -1, nout])
     x = tf.nn.bias_add(x, bias)
     x = tf.nn.relu(x)
@@ -385,14 +385,14 @@ def pooling_conv(input, layer_conf, nout, name):
     kernel, out_layer_conf = pooling_conv_kernel(input, layer_conf, nout, name)
 
     x = tf.reshape(input, [batch_size, -1])
-    xs = []
-    for x in tf.split(x, batch_size, 0):
-        x = tf.transpose(x, perm=[1, 0])
-        x = tf.sparse_tensor_dense_matmul(kernel, x)
-        x = tf.transpose(x, perm=[1, 0])
-        xs.append(x)
+    ys = []
+    for y in tf.split(x, batch_size, 0):
+        y = tf.transpose(y, perm=[1, 0])
+        y = tf.sparse_tensor_dense_matmul(kernel, y)
+        y = tf.transpose(y, perm=[1, 0])
+        ys.append(y)
 
-    x = tf.concat(xs, axis=0)
+    x = tf.concat(ys, axis=0)
     x = tf.reshape(x, [batch_size, -1, nout])
 
     return x, out_layer_conf

@@ -41,10 +41,10 @@ class BinnedESum3DConvModel(ClassificationModel):
             x = tf.layers.conv3d(x, 18, [1, 2, 2], activation=tf.nn.relu, padding='same')
             x = tf.layers.conv3d(x, 18, [2, 1, 1], activation=tf.nn.relu, padding='same')
 
-            flattened_features = tf.reshape(x, (self.batch_size, -1))
+            x = tf.reshape(x, (self.batch_size, -1))
 
-            fc_1 = tf.layers.dense(flattened_features, units=30, activation=tf.nn.relu)
-            fc_2 = tf.layers.dense(fc_1, units=30, activation=tf.nn.relu)
-            fc_3 = tf.layers.dense(fc_2, units=self.num_classes, activation=None) # (Batch, Classes)
+            x = tf.layers.dense(x, units=30, activation=tf.nn.relu)
+            x = tf.layers.dense(x, units=30, activation=tf.nn.relu)
+            x = tf.layers.dense(x, units=self.num_classes, activation=None) # (Batch, Classes)
 
             self.logits = fc_3

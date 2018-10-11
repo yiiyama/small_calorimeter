@@ -25,8 +25,8 @@ import conversion
 converter = getattr(conversion, args.converter)()
 
 feature_mapping = converter.feature_mapping()
-#feature_mapping['labels_one_hot'] = tf.FixedLenFeature((2,), tf.int64)
-feature_mapping['labels_one_hot'] = tf.FixedLenFeature((6,), tf.int64)
+feature_mapping['labels_one_hot'] = tf.FixedLenFeature((2,), tf.int64)
+#feature_mapping['labels_one_hot'] = tf.FixedLenFeature((6,), tf.int64)
 #feature_mapping['labels_one_hot'] = tf.VarLenFeature(tf.int64)
 
 def parse_one(example_proto):
@@ -34,13 +34,8 @@ def parse_one(example_proto):
     return parsed
 
 dataset = tf.data.TFRecordDataset([args.input], compression_type = 'GZIP') \
-                 .map(parse_one)
-
-#dataset = tf.data.TFRecordDataset([args.input], compression_type = 'GZIP')
-#print(dataset.output_shapes)
-#print(dataset.output_classes)
-#print(dataset.output_types)
-#sys.exit(0)
+                 .map(parse_one) \
+                 .batch(args.nevents)
 
 iterator = dataset.make_one_shot_iterator()
 next_element = iterator.get_next()

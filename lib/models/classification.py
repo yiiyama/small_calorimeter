@@ -40,7 +40,7 @@ class ClassificationModel(Model):
         self.debug.append(('prediction', prediction))
         
         self.accuracy = tf.reduce_mean(tf.cast(tf.equal(argmax_labels, prediction), tf.float32))
-        self.confusion_matrix = tf.confusion_matrix(labels=argmax_labels, predictions=prediction, num_classes=self.num_classes)
+        # self.confusion_matrix = tf.confusion_matrix(labels=argmax_labels, predictions=prediction, num_classes=self.num_classes) # not used
 
         self.softmax = tf.nn.softmax(self.logits)
 
@@ -53,12 +53,12 @@ class ClassificationModel(Model):
         thresholds = tf.constant([[0.005 * x for x in range(NTHRES)]]) # (1, NTHRES)
         self._evaluate_targets = []
 
-        for icls in range(self.num_classes):
-            truth = tf.gather(tf.cast(self.placeholders[-1], tf.int32), [icls], axis=1) # (N_batch, 1)
-            prob = tf.gather(self.softmax, [icls], axis=1) # (N_batch, 1)
+        if self.num_classes == 2:
+            truth = tf.gather(tf.cast(self.placeholders[-1], tf.int32), [0], axis=1) # (N_batch, 1)
+            prob = tf.gather(self.softmax, [0], axis=1) # (N_batch, 1)
 
             roc_auc, auc_update = tf.metrics.auc(truth, prob)
-            self.summary.append(('ROCAUC%d' % icls, auc_update))
+            self.summary.append(('ROCAUC', auc_update))
 
             predictions = tf.greater(prob, thresholds) # (N_batch, NTHRES)
 
@@ -66,9 +66,27 @@ class ClassificationModel(Model):
 
             pred_correct = tf.boolean_mask(predictions, mask, axis=0)
             pred_incorrect = tf.boolean_mask(predictions, 1 - mask, axis=0)
-
+    
             self._evaluate_targets.append(pred_correct)
             self._evaluate_targets.append(pred_incorrect)
+
+        else:
+            for icls in range(self.num_classes):
+                truth = tf.gather(tf.cast(self.placeholders[-1], tf.int32), [icls], axis=1) # (N_batch, 1)
+                prob = tf.gather(self.softmax, [icls], axis=1) # (N_batch, 1)
+    
+                roc_auc, auc_update = tf.metrics.auc(truth, prob)
+                self.summary.append(('ROCAUC%d' % icls, auc_update))
+    
+                predictions = tf.greater(prob, thresholds) # (N_batch, NTHRES)
+    
+                mask = tf.squeeze(truth) # (N_batch)
+    
+                pred_correct = tf.boolean_mask(predictions, mask, axis=0)
+                pred_incorrect = tf.boolean_mask(predictions, 1 - mask, axis=0)
+    
+                self._evaluate_targets.append(pred_correct)
+                self._evaluate_targets.append(pred_incorrect)
 
     def init_evaluate(self):
         self.n_correct = []
