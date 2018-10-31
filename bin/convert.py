@@ -9,7 +9,9 @@ parser.add_argument('converter', help="Converter class")
 parser.add_argument('input', help="Path to input tree")
 parser.add_argument('output', help="Output file name")
 parser.add_argument('nevents', nargs = '?', default = -1, type = int, help = 'Number of events to process')
-parser.add_argument('--epi-filter', '-F', action = 'store_true', dest = 'epi_filter', help = 'Select events with electron or charged pion only.')
+parser.add_argument('--epi-filter', '-F', action = 'store_true', dest = 'epi_filter', help = 'Select events with electron or neutral pion only.')
+parser.add_argument('--gpi-filter', '-G', action = 'store_true', dest = 'gpi_filter', help = 'Select events with photon or neutral pion only.')
+parser.add_argument('--filter', '-f', dest = 'filter', help = 'Arbitrary filter expression.')
 args = parser.parse_args()
 
 sys.argv = []
@@ -43,12 +45,21 @@ if tree.GetBranch('rechit_detid'):
 
 num_features = len(feature_branches)
 
-label_branches = [
-    'isElectron',
-    'isPionNeutral'
-]
-if not args.epi_filter:
-    label_branches += [
+if args.epi_filter:
+    label_branches = [
+        'isElectron',
+        'isPionNeutral'
+    ]
+elif args.gpi_filter:
+    label_branches = [
+        'isGamma',
+        'isPionNeutral'
+    ]
+else:
+    label_branches = [
+        'isElectron',
+        'isGamma',
+        'isPionNeutral',
         'isMuon',
         'isPionCharged',
         'isK0Long',
@@ -56,10 +67,15 @@ if not args.epi_filter:
     ]
 num_labels = len(label_branches)
 
-if args.epi_filter:
-    selection = 'isElectron || isPionNeutral'
+if args.filter:
+    selection = args.filter
 else:
-    selection = None
+    selection = '1'
+
+if args.epi_filter:
+    selection = '(%s) && (isElectron || isPionNeutral)' % selection
+elif args.gpi_filter:
+    selection = '(%s) && (isGamma || isPionNeutral)' % selection
 
 full_array = rnp.tree2array(tree, feature_branches + label_branches, selection)
 

@@ -21,6 +21,17 @@ if [ $CLS = "epi" ]
 then
   CLASSES="electron_pion"
   FLAG="-F"
+  ARG=""
+elif [ $CLS = "gpi" ]
+then
+  CLASSES="gamma_pion"
+  FLAG="-G"
+  ARG=""
+elif [ $CLS = "easy" ]
+then
+  CLASSES="gamma_pion_easy"
+  FLAG="-F -f"
+  ARG='true_energy < 10 && true_x > 0 && true_y > 0'
 else
   CLASSES="all"
   FLAG=""
@@ -30,6 +41,6 @@ export X509_USER_PROXY=$PWD/x509up_u51268
 
 xrdcp root://eoscms.cern.ch/$(echo $INPUT | sed 's|/eos/cms||') $PWD
 
-$SMALLCALO/bin/convert.py $CONVERTER $PWD/$(basename $INPUT) out.tfrecords $NEVENTS $FLAG
+$SMALLCALO/bin/convert.py $CONVERTER $PWD/$(basename $INPUT) out.tfrecords $NEVENTS $FLAG "$ARG"
 
 xrdcp out.tfrecords root://eoscms.cern.ch//store/user/yiiyama/small_calorimeter/$CLASSES/$PROD/$CONVERTER/$(basename $INPUT | sed 's/[.]root/.tfrecords/')

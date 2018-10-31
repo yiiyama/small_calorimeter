@@ -1,4 +1,5 @@
 import tensorflow as tf
+import numpy as np
 
 from models.model import Model
 
@@ -98,25 +99,65 @@ class ClassificationModel(Model):
             self.n_incorrect.append(np.zeros((NTHRES,), dtype=np.float64))
             self.n_class.append(0)
 
-    def _do_evaluate(self, results):
-        for icls in range(self.num_classes):
-            pred_correct, pred_incorrect = results[icls * 2:icls * 2 + 1]
+    def _do_evaluate(self, results, summary_dict):
+        if self.num_classes == 2:
+            pred_correct, pred_incorrect = results
 
             n_true = np.shape(pred_correct)[0]
             n_fake = np.shape(pred_incorrect)[0]
 
-            self.n_class[icls] += n_true
+            self.n_class[0] += n_true
+            self.n_class[1] += n_fake
 
             for ient in range(n_true):
-                self.n_correct[icls] += pred_correct[ient]
+                self.n_correct[0] += pred_correct[ient]
 
             for ient in range(n_fake):
-                self.n_incorrect[icls] += pred_incorrect[ient]
+                self.n_incorrect[0] += pred_incorrect[ient]
+
+        else:
+            for icls in range(self.num_classes):
+                pred_correct, pred_incorrect = results[icls * 2:icls * 2 + 2]
+    
+                n_true = np.shape(pred_correct)[0]
+                n_fake = np.shape(pred_incorrect)[0]
+    
+                self.n_class[icls] += n_true
+    
+                for ient in range(n_true):
+                    self.n_correct[icls] += pred_correct[ient]
+    
+                for ient in range(n_fake):
+                    self.n_incorrect[icls] += pred_incorrect[ient]
 
     def print_evaluation_result(self):
+        import matplotlib.pyplot as plt
+
+        data = []
+
         for icls in range(self.num_classes):
             self.n_correct[icls] /= self.n_class[icls]
             self.n_incorrect[icls] /= sum(n for i, n in enumerate(self.n_class) if i != icls)
 
-            pairs = np.concatenate((np.expand_dims(self.n_correct[icls], axis=1), np.expand_dims(self.n_incorrect[icls], axis=1)), axis=1)
-            print(pairs)
+            plt.figure()
+            lw = 2
+            plt.plot(self.n_incorrect[icls], self.n_correct[icls], color='darkorange',
+                     lw=lw, label='ROC curve')
+            plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
+            plt.xlim([0.0, 1.0])
+            plt.ylim([0.0, 1.05])
+            plt.xlabel('False Positive Rate')
+            plt.ylabel('True Positive Rate')
+            plt.title('Class %d identification' % icls)
+            plt.legend(loc="lower right")
+            plt.savefig('%s/%s_roc_%d.pdf' % (self.plot_dir, self.variable_scope, icls))
+            plt.savefig('%s/%s_roc_%d.png' % (self.plot_dir, self.variable_scope, icls))
+
+            correct = np.expand_dims(self.n_correct[icls], 0)
+            incorrect = np.expand_dims(self.n_incorrect[icls], 0)
+            data.append(np.expand_dims(np.concatenate((correct, incorrect), axis=0), 0))
+
+            if self.num_classes == 2:
+                break
+
+        np.save('%s/%s_roc.npy' % (self.data_dir, self.variable_scope), np.concatenate(data))

@@ -185,7 +185,7 @@ class BinnedFeaturedConverter(Converter):
 #        print(example['energy_map'])
 #        print(type(example['labels_one_hot']))
 #        print(np.shape(example['labels_one_hot']))
-#        print(example['labels_one_hot'])
+        print(example['labels_one_hot'])
         energy_map = example['energy_map']
         esum = np.sum(energy_map[:,:,:,:,0:12:3], axis=4, keepdims=True)
         print(np.shape(esum))

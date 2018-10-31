@@ -26,20 +26,17 @@ class BinnedFeatured3DConvModel(ClassificationModel):
             x = tf.layers.conv3d(x, 18, [2, 3, 3], activation=tf.nn.relu, padding='same')
             x = tf.layers.conv3d(x, 18, [2, 3, 3], activation=tf.nn.relu, padding='same')
 
-            x = tf.layers.max_pooling3d(x, [2, 2, 2], strides=2) # 8, 8, 13, 18
+            x = tf.layers.max_pooling3d(x, [2, 2, 2], strides=2) # 12, 8, 8, 18
 
             x = tf.layers.conv3d(x, 25, [2, 3, 3], activation=tf.nn.relu, padding='same')
             x = tf.layers.conv3d(x, 25, [2, 3, 3], activation=tf.nn.relu, padding='same')
 
-            x = tf.layers.max_pooling3d(x, [2, 2, 2], strides=2) # 4, 4, 7, 18
+            x = tf.layers.max_pooling3d(x, [2, 2, 2], strides=2) # 6, 4, 4, 25
 
             x = tf.layers.conv3d(x, 25, [2, 3, 3], activation=tf.nn.relu, padding='same')
             x = tf.layers.conv3d(x, 25, [2, 3, 3], activation=tf.nn.relu, padding='same')
 
-            x = tf.layers.max_pooling3d(x, [2, 2, 2], strides=2) # 2, 2, 4, 18
-
-            x = tf.layers.conv3d(x, 25, [2, 3, 3], activation=tf.nn.relu, padding='same')
-            x = tf.layers.conv3d(x, 25, [2, 3, 3], activation=tf.nn.relu, padding='same')
+            x = tf.layers.max_pooling3d(x, [2, 2, 2], strides=2) # 3, 2, 2, 25
 
             x = tf.reshape(x, (self.batch_size, -1))
 

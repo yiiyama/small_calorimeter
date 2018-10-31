@@ -139,7 +139,7 @@ class Trainer(object):
             # Wait for threads to stop
             coord.join(threads)
 
-    def evaluate(self):
+    def evaluate(self, nbatches = 100):
         self.initialize()
         self.model.init_evaluate()
 
@@ -156,7 +156,7 @@ class Trainer(object):
             self.saver_sparse.restore(sess, self.model_path)
 
             ibatch = 0
-            while True:
+            while ibatch != nbatches:
                 try:
                     self.model.evaluate(sess, inputs_feed)
                 except tf.errors.OutOfRangeError:

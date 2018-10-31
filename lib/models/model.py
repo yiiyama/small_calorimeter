@@ -19,10 +19,13 @@ class Model(object):
         self.loss = None # scalar
         self.optimizer = None
 
-        self.summary = []
+        self.summary = [] # [(name, scalar)]
         self._summary = None
 
         self.debug = [] # [(tag, tensor)]
+
+        self.plot_dir = config['plot_dir']
+        self.data_dir = config['data_dir']
 
     def initialize(self):
         if self.initialized:
@@ -79,4 +82,6 @@ class Model(object):
         feed_dict = self.make_feed_dict(sess, next_input)
 
         results = sess.run(self._evaluate_targets, feed_dict=feed_dict)
-        self._do_evaluate(results)
+        summary = sess.run([s[1] for s in self.summary], feed_dict=feed_dict)
+        summary_dict = dict((self.summary[i][0], summary[i]) for i in range(len(self.summary)))
+        self._do_evaluate(results, summary_dict)

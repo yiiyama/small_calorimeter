@@ -30,7 +30,7 @@ class UnbinnedGraphModel(ClassificationModel):
             x = nearest_neighbor_conv(x, layer_conf, 32, 'layer1')
             print('layer1_x', x.shape)
             print('layer2')
-            x = nearest_neighbor_conv(x, layer_conf, 32, 'layer2')
+            x = nearest_neighbor_conv(x, layer_conf, 16, 'layer2')
             print('layer2_x', x.shape)
 
             print('layer3')
@@ -45,14 +45,12 @@ class UnbinnedGraphModel(ClassificationModel):
             print('layer4_conf', layer_conf)
 
             # all layers now have the same geometry
+            x = tf.reshape(x, (self.batch_size, layer_conf[3], -1))
 
-            x = pool_z(x, 16) # 13 * 19 * 16
-
-            print('layer5_x', x.shape)
-
-            x = pool_z(x, 16) # 7 * 19 * 16
-
-            print('layer6_x', x.shape)
+            print('before_conv', x.shape)
+            x = tf.layers.conv1d(x, 64, [2], strides=[2], padding='same')
+            x = tf.layers.conv1d(x, 32, [2], strides=[2], padding='same')
+            x = tf.layers.conv1d(x, 32, [2], strides=[2], padding='same')
 
             x = tf.reshape(x, (self.batch_size, -1))
             print('flattened_shape', x.shape)
