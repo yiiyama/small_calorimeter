@@ -1,3 +1,10 @@
+"""
+Generalized 2D convolution where sensor cells are considered as vertices connected to other vertices
+by named edges. Edges carry convolution weights.
+This implementation: [nsens, nch_in] -> [nsens, nch_out] as a single matrix operation. Input is reformed
+into [nsens + 1, nch_in] where input[nsens][i] = 0 for all i. Input is then gathered by the sensor id for each output sensor for each edge type. Since the input and output number of sensors are identical, after a reshape we get [nsens, nch_in * nweight] where the value is 0 for non-existing sensor-weight combination (achieved by a trick of gathering nsens'th input by default). The weights is a trainable variable of shape [nch_in * nweight, nch_out], so the matmul of the two results in the desired output.
+"""
+
 import tensorflow as tf
 import numpy as np
 

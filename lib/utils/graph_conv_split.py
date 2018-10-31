@@ -1,3 +1,11 @@
+"""
+Generalized 2D convolution where sensor cells are considered as vertices connected to other vertices
+by named edges. Edges carry convolution weights.
+This implementation: Construct a one sparse tensor that encodes the adjacency per layer. Input for
+each layer is separately matmul'ed with the adjacency matrix. Results are concatenated for output.
+Also extremely slow.
+"""
+
 import tensorflow as tf
 
 NSENSORS = 2679
