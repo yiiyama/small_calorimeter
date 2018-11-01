@@ -1,7 +1,7 @@
 import tensorflow as tf
 import numpy as np
 from models.classification import ClassificationModel
-from utils.graph_conv_weightwise import layer_sizes, nearest_neighbor_conv, pooling_conv, pool_z
+from utils.generalized_conv import layer_sizes, nearest_neighbor_conv, pooling_conv, pool_z
 
 MAXHITS = 2679
 NUM_FEATURES = 9

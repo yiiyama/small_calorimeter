@@ -15,17 +15,12 @@ class ClassificationModel(Model):
         self.confusion_matrix = None
 
     def _make_input_map(self):
-        self.keys_to_features = []
-
-        for name, dtype, shape in self._features:
-            self.keys_to_features.append((name, tf.FixedLenFeature(shape, dtype)))
+        Model._make_input_map(self)
 
         self.keys_to_features.append(('labels_one_hot', tf.FixedLenFeature((self.num_classes,), tf.int64)))
 
     def _make_placeholders(self):
-        self.placeholders = []
-        for name, dtype, shape in self._features:
-            self.placeholders.append(tf.placeholder(dtype=dtype, shape=[self.batch_size] + shape))
+        Model._make_placeholders(self)
 
         self.placeholders.append(tf.placeholder(dtype=tf.int64, shape=[self.batch_size, self.num_classes]))
 

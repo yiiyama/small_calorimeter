@@ -12,6 +12,7 @@ class Model(object):
         self.batch_size = int(config['batch_size'])
         self.learning_rate = float(config['learning_rate'])
 
+        self._features = None
         self.keys_to_features = None
 
         self.placeholders = [] # [(N_batch, ...)]
@@ -26,6 +27,17 @@ class Model(object):
 
         self.plot_dir = config['plot_dir']
         self.data_dir = config['data_dir']
+
+    def _make_input_map(self):
+        self.keys_to_features = []
+
+        for name, dtype, shape in self._features:
+            self.keys_to_features.append((name, tf.FixedLenFeature(shape, dtype)))
+
+    def _make_placeholders(self):
+        self.placeholders = []
+        for name, dtype, shape in self._features:
+            self.placeholders.append(tf.placeholder(dtype=dtype, shape=[self.batch_size] + shape))
 
     def initialize(self):
         if self.initialized:
