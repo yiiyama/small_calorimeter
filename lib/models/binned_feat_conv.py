@@ -17,31 +17,30 @@ class BinnedFeatured3DConvModel(ClassificationModel):
         # [Nbatch, Nz, Ny, Nx, Nfeat]
         x = self.placeholders[0]
 
-        with tf.variable_scope(self.variable_scope):
-            x = tf.layers.conv3d(x, 50, [1, 1, 1], activation=tf.nn.relu, padding='same')
-            x = tf.layers.conv3d(x, 50, [1, 1, 1], activation=tf.nn.relu, padding='same')
-            x = tf.layers.conv3d(x, 25, [1, 1, 1], activation=tf.nn.relu, padding='same')
+        x = tf.layers.conv3d(x, 50, [1, 1, 1], activation=tf.nn.relu, padding='same')
+        x = tf.layers.conv3d(x, 50, [1, 1, 1], activation=tf.nn.relu, padding='same')
+        x = tf.layers.conv3d(x, 25, [1, 1, 1], activation=tf.nn.relu, padding='same')
 
-            x = tf.layers.conv3d(x, 18, [2, 3, 3], activation=tf.nn.relu, padding='same')
-            x = tf.layers.conv3d(x, 18, [2, 3, 3], activation=tf.nn.relu, padding='same')
-            x = tf.layers.conv3d(x, 18, [2, 3, 3], activation=tf.nn.relu, padding='same')
+        x = tf.layers.conv3d(x, 18, [2, 3, 3], activation=tf.nn.relu, padding='same')
+        x = tf.layers.conv3d(x, 18, [2, 3, 3], activation=tf.nn.relu, padding='same')
+        x = tf.layers.conv3d(x, 18, [2, 3, 3], activation=tf.nn.relu, padding='same')
 
-            x = tf.layers.max_pooling3d(x, [2, 2, 2], strides=2) # 12, 8, 8, 18
+        x = tf.layers.max_pooling3d(x, [2, 2, 2], strides=2) # 12, 8, 8, 18
 
-            x = tf.layers.conv3d(x, 25, [2, 3, 3], activation=tf.nn.relu, padding='same')
-            x = tf.layers.conv3d(x, 25, [2, 3, 3], activation=tf.nn.relu, padding='same')
+        x = tf.layers.conv3d(x, 25, [2, 3, 3], activation=tf.nn.relu, padding='same')
+        x = tf.layers.conv3d(x, 25, [2, 3, 3], activation=tf.nn.relu, padding='same')
 
-            x = tf.layers.max_pooling3d(x, [2, 2, 2], strides=2) # 6, 4, 4, 25
+        x = tf.layers.max_pooling3d(x, [2, 2, 2], strides=2) # 6, 4, 4, 25
 
-            x = tf.layers.conv3d(x, 25, [2, 3, 3], activation=tf.nn.relu, padding='same')
-            x = tf.layers.conv3d(x, 25, [2, 3, 3], activation=tf.nn.relu, padding='same')
+        x = tf.layers.conv3d(x, 25, [2, 3, 3], activation=tf.nn.relu, padding='same')
+        x = tf.layers.conv3d(x, 25, [2, 3, 3], activation=tf.nn.relu, padding='same')
 
-            x = tf.layers.max_pooling3d(x, [2, 2, 2], strides=2) # 3, 2, 2, 25
+        x = tf.layers.max_pooling3d(x, [2, 2, 2], strides=2) # 3, 2, 2, 25
 
-            x = tf.reshape(x, (self.batch_size, -1))
+        x = tf.reshape(x, (self.batch_size, -1))
 
-            x = tf.layers.dense(x, units=128, activation=tf.nn.relu)
-            x = tf.layers.dense(x, units=128, activation=tf.nn.relu)
-            x = tf.layers.dense(x, units=self.num_classes, activation=None) # (Batch, Classes)
+        x = tf.layers.dense(x, units=128, activation=tf.nn.relu)
+        x = tf.layers.dense(x, units=128, activation=tf.nn.relu)
+        x = tf.layers.dense(x, units=self.num_classes, activation=None) # (Batch, Classes)
 
-            self.logits = x
+        self.logits = x

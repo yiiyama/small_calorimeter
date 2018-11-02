@@ -55,6 +55,7 @@ def make_indexing_tensor(spatial_features, k=10, n_batch=-1):
     Indexing tensor is used in gather_nd:
     Idx[b][s][n] = (b, nth neighbor of s)
     gather_nd(features, Idx)[b][s][n] = (features of nth neighbor of s in batch b)
+    note: 0th neighbor is itself
     """
 
     # Neighbor matrix should be int as it should be used for indexing

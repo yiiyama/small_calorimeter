@@ -19,16 +19,21 @@ class SparseConvLearnableNeighborsModel(ClassificationModel):
         ]
         
     def _make_network(self):
-        x = self.placeholders
+        features = self.placeholders[:3]
 
-        x = sparse_conv(x, num_neighbors=18, output_features=15, space_transformations=[10, 10, 10], propagate_ahead=True)
-        x = sparse_conv(x, num_neighbors=18, output_features=15, space_transformations=[10, 10, 10], propagate_ahead=True)
-        x = sparse_conv(x, num_neighbors=18, output_features=15, space_transformations=[10, 10, 10], propagate_ahead=True)
-        x = sparse_conv(x, num_neighbors=18, output_features=30, space_transformations=[10, 10, 10], propagate_ahead=True)
-        x = sparse_conv(x, num_neighbors=18, output_features=3, space_transformations=[3], propagate_ahead=True)
+        print('start', features[0].shape, features[1].shape, features[2].shape)
+        features = sparse_conv(features, num_neighbors=18, output_features=15, space_transformations=[10, 10, 10], propagate_ahead=True, name='layer0')
+        print('layer0', features[0].shape, features[1].shape, features[2].shape)
+        features = sparse_conv(features, num_neighbors=18, output_features=15, space_transformations=[10, 10, 10], propagate_ahead=True, name='layer1')
+        print('layer1', features[0].shape, features[1].shape, features[2].shape)
+        features = sparse_conv(features, num_neighbors=18, output_features=15, space_transformations=[10, 10, 10], propagate_ahead=True, name='layer2')
+        print('layer2', features[0].shape, features[1].shape, features[2].shape)
+        features = sparse_conv(features, num_neighbors=18, output_features=30, space_transformations=[10, 10, 10], propagate_ahead=True, name='layer3')
+        print('layer3', features[0].shape, features[1].shape, features[2].shape)
+        features = sparse_conv(features, num_neighbors=18, output_features=3, space_transformations=[3], propagate_ahead=True, name='layer4')
 
-        # Need to cook this down to classification!
-
-        x = tf.layers.dense(x, units=self.num_classes, activation=None) # (Batch, Classes)
+        #x = tf.layers.dense(x, units=self.num_classes, activation=None) # (Batch, Classes)
+        x = tf.reshape(features[0], (self.batch_size, -1))
+        x = tf.gather(x, [0, 1], axis = 1)
 
         self.logits = x

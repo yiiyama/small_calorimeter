@@ -46,7 +46,8 @@ class Model(object):
 
         self._make_input_map()
         self._make_placeholders()
-        self._make_network()
+        with tf.variable_scope(self.variable_scope):
+            self._make_network()
         self._make_loss()
         self._make_summary()
 

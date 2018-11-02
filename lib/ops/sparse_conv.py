@@ -1,4 +1,9 @@
-def sparse_conv(input,
+import tensorflow as tf
+
+from utils.noisy_eye import NoisyEyeInitializer
+from utils.spatial import make_indexing_tensor
+
+def sparse_conv(input_features,
                 num_neighbors=10, 
                 output_features=15,
                 space_transformations=[10, 10, 10],
@@ -10,7 +15,7 @@ def sparse_conv(input,
     
     --> revise the space distance stuff
 
-    :param input: (other, spatial, spatial_local) features
+    :param input_features: (other, spatial, spatial_local) features
     :param num_neighbors: An integer containing number of neighbors to pick + 1 (+1 is for yourself)
     :param output_features: Number of output features for color like outputs. If list, create multiple dense layers with output of hidden layer i = output_features[i]
     :return: new (other, spatial, spatial_local) features
@@ -20,7 +25,7 @@ def sparse_conv(input,
 
     assert type(space_transformations) is list
 
-    other_features, spatial_features_global, spatial_features_local = input
+    other_features, spatial_features_global, spatial_features_local = input_features
 
     shape_other_features = other_features.get_shape().as_list()
     shape_space_features = spatial_features_global.get_shape().as_list()
@@ -38,6 +43,8 @@ def sparse_conv(input,
     n_batch = shape_space_features[0]
     n_max_entries = shape_space_features[1]
 
+    ## Spatial transformation: concatenate global & local features and run them through several dense layers
+
     transformed_space_features = tf.concat([spatial_features_global, spatial_features_local], axis=-1)
 
     if strict_global_space:
@@ -52,6 +59,8 @@ def sparse_conv(input,
                                                      kernel_initializer=NoisyEyeInitializer,
                                                      name='%s_sp_%d' % (name, ist))
             
+    ## Find nearest neighbors (Euclidean) of each node in the transformed space
+
     if strict_global_space:
         # need to tell the number of batches to make_indexing_tensor
         create_indexing_batch = n_batch
@@ -59,6 +68,7 @@ def sparse_conv(input,
         # make_indexing_tensor can figure out the number of batches
         create_indexing_batch = -1
 
+    # see doc of make_indexing_tensor for the meaning of indexing tensor
     indexing_tensor, distance_matrix = make_indexing_tensor(transformed_space_features,
                                                             num_neighbors,
                                                             create_indexing_batch)
@@ -66,10 +76,6 @@ def sparse_conv(input,
     if strict_global_space:
         # Revert batch reduction
         transformed_space_features = tf.tile(transformed_space_features, [n_batch, 1, 1])
-
-    output_global_space = spatial_features_global
-    if propagate_ahead:
-        output_global_space = tf.concat([transformed_space_features, spatial_features_global], axis=-1)
     
     # distance_matrix is strict negative
     # -distance_matrix -> strict positive, small = near
@@ -78,13 +84,18 @@ def sparse_conv(input,
     inverse_distance = 1. - tf.nn.softsign(-distance_matrix) # *float(num_neighbors)
     inverse_distance = tf.expand_dims(inverse_distance, axis=3)
 
+    ## Flatten all "other features" (i.e. energy etc.) of nearest neighbors for each sensor and
+    ## pass them through dense layers
+
     if type(output_features) is int:
         output_features = [output_features]
    
-    last_iteration = other_features
     for ift, nft in enumerate(output_features):
-        gathered = tf.gather_nd(last_iteration, indexing_tensor) * inverse_distance
+        gathered = tf.gather_nd(other_features, indexing_tensor) * inverse_distance
         flattened_gathered = tf.reshape(gathered, [n_batch, n_max_entries, -1])
-        last_iteration = tf.layers.dense(flattened_gathered, nft, activation=tf.nn.relu, name='%s_%d_%d' % (name, nft, ift))
+        other_features = tf.layers.dense(flattened_gathered, nft, activation=tf.nn.relu, name='%s_%d_%d' % (name, nft, ift))
+
+    if propagate_ahead:
+        spatial_features_global = tf.concat([transformed_space_features, spatial_features_global], axis=-1)
       
-    return (last_iteration, output_global_space, spatial_features_local)
+    return other_features, spatial_features_global, spatial_features_local

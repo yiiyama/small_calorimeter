@@ -17,64 +17,63 @@ class BinnedFeatured2DConvModel(ClassificationModel):
         # [Nbatch, Nz, Ny, Nx, 1]
         x = self.placeholders[0]
 
-        with tf.variable_scope(self.variable_scope):
-            x = tf.reshape(x, (self.batch_size * self.nbinsz, self.nbinsy, self.nbinsx, self.nfeatures))
+        x = tf.reshape(x, (self.batch_size * self.nbinsz, self.nbinsy, self.nbinsx, self.nfeatures))
 
-            x = tf.layers.conv2d(x, 50, [1, 1], activation=tf.nn.relu, padding='same')
-            x = tf.layers.conv2d(x, 25, [1, 1], activation=tf.nn.relu, padding='same')
+        x = tf.layers.conv2d(x, 50, [1, 1], activation=tf.nn.relu, padding='same')
+        x = tf.layers.conv2d(x, 25, [1, 1], activation=tf.nn.relu, padding='same')
 
-            x = tf.layers.conv2d(x, 25, [3, 3], activation=tf.nn.relu, padding='same')
-            x = tf.layers.conv2d(x, 12, [3, 3], activation=tf.nn.relu, padding='same')
+        x = tf.layers.conv2d(x, 25, [3, 3], activation=tf.nn.relu, padding='same')
+        x = tf.layers.conv2d(x, 12, [3, 3], activation=tf.nn.relu, padding='same')
 
-            x = tf.layers.max_pooling2d(x, [2, 2], strides=2) # 25, 8, 8, 10
+        x = tf.layers.max_pooling2d(x, [2, 2], strides=2) # 25, 8, 8, 10
 
-            print('after first pooling', x.shape)
+        print('after first pooling', x.shape)
 
-            nbinsx = self.nbinsx // 2
-            nbinsy = self.nbinsy // 2
+        nbinsx = self.nbinsx // 2
+        nbinsy = self.nbinsy // 2
 
-            x = tf.reshape(x, (self.batch_size, self.nbinsz, nbinsy, nbinsx, -1))
+        x = tf.reshape(x, (self.batch_size, self.nbinsz, nbinsy, nbinsx, -1))
 
-            print('reshaped', x.shape)
+        print('reshaped', x.shape)
 
-            x = tf.transpose(x, perm=[0, 2, 3, 1, 4])
-            x = tf.reshape(x, (self.batch_size * nbinsy * nbinsx, -1))
+        x = tf.transpose(x, perm=[0, 2, 3, 1, 4])
+        x = tf.reshape(x, (self.batch_size * nbinsy * nbinsx, -1))
 
-            print('reshaped for dense', x.shape)
+        print('reshaped for dense', x.shape)
 
-            nbinsz = self.nbinsz
-            x = tf.layers.dense(x, units=nbinsz * 5, activation=tf.nn.relu)
-            nbinsz = nbinsz // 2
-            x = tf.layers.dense(x, units=nbinsz * 5, activation=tf.nn.relu)
-            nbinsz = nbinsz // 2
-            x = tf.layers.dense(x, units=nbinsz * 5, activation=tf.nn.relu)
-            nbinsz = nbinsz // 2
-            x = tf.layers.dense(x, units=nbinsz * 5, activation=tf.nn.relu)
+        nbinsz = self.nbinsz
+        x = tf.layers.dense(x, units=nbinsz * 5, activation=tf.nn.relu)
+        nbinsz = nbinsz // 2
+        x = tf.layers.dense(x, units=nbinsz * 5, activation=tf.nn.relu)
+        nbinsz = nbinsz // 2
+        x = tf.layers.dense(x, units=nbinsz * 5, activation=tf.nn.relu)
+        nbinsz = nbinsz // 2
+        x = tf.layers.dense(x, units=nbinsz * 5, activation=tf.nn.relu)
 
-            print('after second dense', x.shape)
+        print('after second dense', x.shape)
 
-            x = tf.reshape(x, (self.batch_size, nbinsy, nbinsx, nbinsz, -1))
-            x = tf.transpose(x, perm=[0, 3, 1, 2, 4])
-            x = tf.reshape(x, (self.batch_size * nbinsz, nbinsy, nbinsx, -1)) # 3, 8, 8, 18
+        x = tf.reshape(x, (self.batch_size, nbinsy, nbinsx, nbinsz, -1))
+        x = tf.transpose(x, perm=[0, 3, 1, 2, 4])
+        x = tf.reshape(x, (self.batch_size * nbinsz, nbinsy, nbinsx, -1)) # 3, 8, 8, 18
 
-            print('reshaped', x.shape)
+        print('reshaped', x.shape)
 
-            x = tf.layers.conv2d(x, 10, [3, 3], activation=tf.nn.relu, padding='same')
-            x = tf.layers.conv2d(x, 10, [3, 3], activation=tf.nn.relu, padding='same')
+        x = tf.layers.conv2d(x, 10, [3, 3], activation=tf.nn.relu, padding='same')
+        x = tf.layers.conv2d(x, 10, [3, 3], activation=tf.nn.relu, padding='same')
 
-            x = tf.layers.max_pooling2d(x, [2, 2], strides=2) # 3, 4, 4, 10
+        x = tf.layers.max_pooling2d(x, [2, 2], strides=2) # 3, 4, 4, 10
 
-            print('after second pooling', x.shape)
+        print('after second pooling', x.shape)
 
-            x = tf.layers.conv2d(x, 25, [2, 2], activation=tf.nn.relu, padding='same')
-            x = tf.layers.conv2d(x, 25, [2, 2], activation=tf.nn.relu, padding='same')
+        x = tf.layers.conv2d(x, 25, [2, 2], activation=tf.nn.relu, padding='same')
+        x = tf.layers.conv2d(x, 25, [2, 2], activation=tf.nn.relu, padding='same')
 
-            x = tf.layers.max_pooling2d(x, [2, 2], strides=2) # 3, 2, 2, 15
+        x = tf.layers.max_pooling2d(x, [2, 2], strides=2) # 3, 2, 2, 15
 
-            x = tf.reshape(x, (self.batch_size, -1))
+        x = tf.reshape(x, (self.batch_size, -1))
 
-            x = tf.layers.dense(x, units=128, activation=tf.nn.relu)
-            x = tf.layers.dense(x, units=128, activation=tf.nn.relu)
-            x = tf.layers.dense(x, units=self.num_classes, activation=None) # (Batch, Classes)
+        x = tf.layers.dense(x, units=128, activation=tf.nn.relu)
+        x = tf.layers.dense(x, units=128, activation=tf.nn.relu)
+        x = tf.layers.dense(x, units=self.num_classes, activation=None) # (Batch, Classes)
 
-            self.logits = x
+        self.logits = x
