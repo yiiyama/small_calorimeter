@@ -31,6 +31,16 @@ def euclidean_squared(A, B):
     return distance
 
 
+def normalise_distance_matrix(AdMat):
+    maxAdMat = tf.reduce_max(tf.reduce_max(AdMat, axis=-1, keepdims=True), axis=-1, keepdims=True)
+    AdMat = AdMat / maxAdMat
+    AdMat = (tf.zeros_like(AdMat) + 1) - AdMat
+    scaling = tf.reduce_sum(tf.reduce_mean(AdMat, axis=-1, keepdims=False))
+    AdMat = AdMat / scaling 
+
+    return AdMat
+
+
 def make_nearest_neighbor_matrix(spatial_features, k=10):
     """
     Nearest neighbors matrix given spatial features.

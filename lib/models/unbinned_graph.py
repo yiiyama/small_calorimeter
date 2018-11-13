@@ -1,7 +1,7 @@
 import tensorflow as tf
 import numpy as np
 from models.classification import ClassificationModel
-from utils.generalized_conv import nearest_neighbor_conv, pooling_conv, pool_z
+from ops.generalized_conv import nearest_neighbor_conv, pooling_conv, pool_z
 
 MAXHITS = 2679
 NUM_FEATURES = 9
@@ -54,7 +54,7 @@ class UnbinnedGraphModel(ClassificationModel):
         x = tf.reshape(x, (self.batch_size, -1))
         print('flattened_shape', x.shape)
 
-        x = tf.layers.dense(x, units=128, activation=tf.nn.relu)
+        x = tf.layers.dense(x, units=64, activation=tf.nn.relu)
         x = tf.layers.dense(x, units=128, activation=tf.nn.relu)
         x = tf.layers.dense(x, units=self.num_classes, activation=None) # (Batch, Classes)
 

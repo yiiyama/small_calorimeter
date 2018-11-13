@@ -5,11 +5,11 @@ from utils.spatial import make_indexing_tensor
 
 def sparse_conv(input_features,
                 num_neighbors=10, 
-                output_features=15,
+                num_output_features=15,
                 space_transformations=[10, 10, 10],
                 propagate_ahead=False,
                 strict_global_space=True,
-                name = None):
+                name=None):
     """
     Defines sparse convolutional layer
     
@@ -21,7 +21,7 @@ def sparse_conv(input_features,
     :return: new (other, spatial, spatial_local) features
     """
     if name is None:
-        name="sparse_conv"
+        name = "sparse_conv"
 
     assert type(space_transformations) is list
 
@@ -87,10 +87,10 @@ def sparse_conv(input_features,
     ## Flatten all "other features" (i.e. energy etc.) of nearest neighbors for each sensor and
     ## pass them through dense layers
 
-    if type(output_features) is int:
-        output_features = [output_features]
+    if type(num_output_features) is int:
+        num_output_features = [num_output_features]
    
-    for ift, nft in enumerate(output_features):
+    for ift, nft in enumerate(num_output_features):
         gathered = tf.gather_nd(other_features, indexing_tensor) * inverse_distance
         flattened_gathered = tf.reshape(gathered, [n_batch, n_max_entries, -1])
         other_features = tf.layers.dense(flattened_gathered, nft, activation=tf.nn.relu, name='%s_%d_%d' % (name, nft, ift))
