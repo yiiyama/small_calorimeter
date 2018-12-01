@@ -11,6 +11,10 @@ class Model(object):
 
         self.batch_size = int(config['batch_size'])
         self.learning_rate = float(config['learning_rate'])
+        try:
+            self.learning_rate_decay = int(config['learning_rate_decay'])
+        except:
+            self.learning_rate_decay = 0
 
         self._features = None
         self.keys_to_features = None
@@ -23,7 +27,7 @@ class Model(object):
         self.summary = [] # [(name, scalar)]
         self._summary = None
 
-        self.debug = [] # [(tag, tensor)]
+        self._debug = [] # [(tag, tensor)]
 
         self.plot_dir = config['plot_dir']
         self.data_dir = config['data_dir']
@@ -56,7 +60,8 @@ class Model(object):
             summary_scalars.append(tf.summary.scalar(key, value))
         self._summary = tf.summary.merge(summary_scalars)
 
-        self.optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate).minimize(self.loss)
+        self._learning_rate = tf.placeholder(tf.float32)
+        self.optimizer = tf.train.AdamOptimizer(learning_rate=self._learning_rate).minimize(self.loss)
 
         self.initialized = True
 
@@ -64,8 +69,13 @@ class Model(object):
         inputs = sess.run([next_input[key] for key, _ in self.keys_to_features])
         return dict(zip(self.placeholders, inputs))
 
-    def train(self, sess, next_input):
+    def train(self, sess, next_input, iteration_number):
         feed_dict = self.make_feed_dict(sess, next_input)
+
+        if self.learning_rate_decay > 0 and iteration_number > 0 and iteration_number % self.learning_rate_decay == 0:
+            self.learning_rate *= 0.5
+
+        feed_dict[self._learning_rate] = self.learning_rate
 
         fetches = [self.loss, self.optimizer, self._summary]
         fetches += [s[1] for s in self.summary]
@@ -78,6 +88,8 @@ class Model(object):
 
     def validate(self, sess, next_input):
         feed_dict = self.make_feed_dict(sess, next_input)
+
+        feed_dict[self._learning_rate] = self.learning_rate
 
         fetches = [self.loss, self.optimizer, self._summary]
         fetches += [s[1] for s in self.summary]
@@ -94,7 +106,12 @@ class Model(object):
     def evaluate(self, sess, next_input):
         feed_dict = self.make_feed_dict(sess, next_input)
 
+        feed_dict[self._learning_rate] = self.learning_rate
+
         results = sess.run(self._evaluate_targets, feed_dict=feed_dict)
         summary = sess.run([s[1] for s in self.summary], feed_dict=feed_dict)
         summary_dict = dict((self.summary[i][0], summary[i]) for i in range(len(self.summary)))
         self._do_evaluate(results, summary_dict)
+
+    def debug(self, name, tensor):
+        self._debug.append((name, tensor))

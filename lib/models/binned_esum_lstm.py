@@ -43,28 +43,28 @@ class BinnedESumLSTMModel(ClassificationModel):
         x = tf.reshape(x, (self.batch_size * nbinsy * nbinsx, self.nbinsz, -1))
         # [Nbatch * Ny * Nx, Nz, 30]
 
-        self.debug.append(('before_first_rnn', tf.shape(x)))
+        self.debug('before_first_rnn', tf.shape(x))
 
         x, state = tf.nn.dynamic_rnn(lstm_cell, x,
                                      dtype=tf.float32, scope="lstm_1")
 
         # [Nbatch * Ny * Nx, Nz, 100]
 
-        self.debug.append(('after_first_rnn', tf.shape(x)))
+        self.debug('after_first_rnn', tf.shape(x))
 
         x, state = tf.nn.dynamic_rnn(lstm_cell_2, x,
                                      dtype=tf.float32, scope="lstm_2")
 
         # [Nbatch * Ny * Nx, Nz, 80]
 
-        self.debug.append(('after_second_rnn', tf.shape(x)))
+        self.debug('after_second_rnn', tf.shape(x))
 
         x = tf.squeeze(tf.gather(x, [self.nbinsz - 1], axis=1), axis=1)
 
         # [Nbatch * Ny * Nx, 80]
 
-        self.debug.append(('after_squeeze', tf.shape(x)))
-
+        self.debug('after_squeeze', tf.shape(x))
+        
         x = tf.reshape(x, (self.batch_size, nbinsy, nbinsx, -1))
 
         # [Nbatch, Ny, Nx, 80]

@@ -30,10 +30,10 @@ class ClassificationModel(Model):
         argmax_labels = tf.argmax(self.placeholders[-1], axis=1)
         prediction = tf.argmax(self.logits, axis=1)
 
-        self.debug.append(('placeholders[-1]', self.placeholders[-1]))
-        self.debug.append(('argmax_labels', argmax_labels))
-        self.debug.append(('logits', self.logits))
-        self.debug.append(('prediction', prediction))
+        self.debug('placeholders[-1]', self.placeholders[-1])
+        self.debug('argmax_labels', argmax_labels)
+        self.debug('logits', self.logits)
+        self.debug('prediction', prediction)
         
         self.accuracy = tf.reduce_mean(tf.cast(tf.equal(argmax_labels, prediction), tf.float32))
         # self.confusion_matrix = tf.confusion_matrix(labels=argmax_labels, predictions=prediction, num_classes=self.num_classes) # not used

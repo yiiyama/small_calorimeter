@@ -93,11 +93,9 @@ class Trainer(object):
         inputs_validation_feed = self.get_input_feeds(self.validation_files)
 
         init = [tf.global_variables_initializer(), tf.local_variables_initializer()]
+
         with tf.Session() as sess:
             sess.run(init)
-
-            coord = tf.train.Coordinator()
-            threads = tf.train.start_queue_runners(sess=sess, coord=coord)
 
             summary_writer = tf.summary.FileWriter(self.summary_path, sess.graph)
 
@@ -112,7 +110,7 @@ class Trainer(object):
             print("Starting iterations")
             while iteration_number < self.train_for_iterations:
                 try:
-                    loss, _, summary_data, summary = self.model.train(sess, inputs_feed)
+                    loss, _, summary_data, summary = self.model.train(sess, inputs_feed, iteration_number)
                 except tf.errors.OutOfRangeError:
                     break
 
@@ -133,12 +131,6 @@ class Trainer(object):
 
                 iteration_number += 1
 
-            # Stop the threads
-            coord.request_stop()
-
-            # Wait for threads to stop
-            coord.join(threads)
-
     def evaluate(self, nbatches = 100):
         self.initialize()
         self.model.init_evaluate()
@@ -148,9 +140,6 @@ class Trainer(object):
         init = [tf.global_variables_initializer(), tf.local_variables_initializer()]
         with tf.Session() as sess:
             sess.run(init)
-
-            coord = tf.train.Coordinator()
-            threads = tf.train.start_queue_runners(sess=sess, coord=coord)
 
             # Load network parameters
             self.saver_sparse.restore(sess, self.model_path)
@@ -167,12 +156,6 @@ class Trainer(object):
                     print(ibatch, 'batches')
 
             self.model.print_evaluation_result()
-
-            # Stop the threads
-            coord.request_stop()
-
-            # Wait for threads to stop
-            coord.join(threads)
 
     def debug(self, trained = False):
         print('Initializing model')
@@ -200,7 +183,7 @@ class Trainer(object):
 
             feed_dict = self.model.make_feed_dict(sess, inputs_feed)
 
-            for tag, tensor in self.model.debug:
+            for tag, tensor in self.model._debug:
                 res, = sess.run([tensor], feed_dict = feed_dict)
                 print(tag, '=', res)
 

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # submit with
-# condor-run run_convert.sh -a inputs.list -e <prod> <converter> -x ~/x509up_u51268
+# condor-run run_convert.sh -i inputs.list -e "<prod> <converter> <class>" -x ~/x509up_u51268
 
 PROD=$1
 CONVERTER=$2
@@ -30,17 +30,20 @@ then
 elif [ $CLS = "easy" ]
 then
   CLASSES="gamma_pion_easy"
-  FLAG="-F -f"
-  ARG='true_energy < 10 && true_x > 0 && true_y > 0'
+  FLAG="-F"
+  ARG='-f "true_energy < 10 && true_x > 0 && true_y > 0"'
 else
   CLASSES="all"
   FLAG=""
+  ARG=""
 fi
 
 export X509_USER_PROXY=$PWD/x509up_u51268
 
 xrdcp root://eoscms.cern.ch/$(echo $INPUT | sed 's|/eos/cms||') $PWD
 
-$SMALLCALO/bin/convert.py $CONVERTER $PWD/$(basename $INPUT) out.tfrecords $NEVENTS $FLAG "$ARG"
+source $SMALLCALO/setup.sh
+
+$SMALLCALO/bin/convert.py $FLAG $ARG $CONVERTER $PWD/$(basename $INPUT) out.tfrecords $NEVENTS
 
 xrdcp out.tfrecords root://eoscms.cern.ch//store/user/yiiyama/small_calorimeter/$CLASSES/$PROD/$CONVERTER/$(basename $INPUT | sed 's/[.]root/.tfrecords/')

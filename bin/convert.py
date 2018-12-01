@@ -2,6 +2,7 @@
 
 import sys
 import os
+import importlib
 from argparse import ArgumentParser
 
 parser = ArgumentParser(description='Convert input ROOT tree to TFRecords')
@@ -16,15 +17,15 @@ args = parser.parse_args()
 
 sys.argv = []
 
+import numpy as np
+import tensorflow as tf
 import ROOT
 ROOT.gROOT.SetBatch(True)
 import root_numpy as rnp
-import numpy as np
-import tensorflow as tf
 
-import conversion
-
-converter = getattr(conversion, args.converter)()
+modname = args.converter[:args.converter.find('.')]
+convmod = importlib.import_module('conversion.' + modname)
+converter = getattr(convmod, args.converter[args.converter.find('.') + 1:])()
 converter.init_convert()
 
 source = ROOT.TFile.Open(args.input)
@@ -58,7 +59,7 @@ elif args.gpi_filter:
 else:
     label_branches = [
         'isElectron',
-        'isGamma',
+        #'isGamma',
         'isPionNeutral',
         'isMuon',
         'isPionCharged',
