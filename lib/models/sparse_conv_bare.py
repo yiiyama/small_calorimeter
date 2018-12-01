@@ -26,7 +26,7 @@ class SparseConvBareModel(ClassificationModel):
 
         self.debug('spatial', spatial_features_global)
 
-        features = construct_sparse_io_dict(other_features, spatial_features_global, spatial_features_local, tf.constant(MAXHITS, dtype=tf.int64))
+        features = construct_sparse_io_dict(other_features, spatial_features_global, spatial_features_local, tf.zeros([1], dtype=tf.int64))
 
         print('start', features['all_features'].shape)
 
