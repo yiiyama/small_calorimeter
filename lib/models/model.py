@@ -67,15 +67,17 @@ class Model(object):
 
     def make_feed_dict(self, sess, next_input):
         inputs = sess.run([next_input[key] for key, _ in self.keys_to_features])
-        return dict(zip(self.placeholders, inputs))
-
-    def train(self, sess, next_input, iteration_number):
-        feed_dict = self.make_feed_dict(sess, next_input)
+        feed_dict = dict(zip(self.placeholders, inputs))
 
         if self.learning_rate_decay > 0 and iteration_number > 0 and iteration_number % self.learning_rate_decay == 0:
             self.learning_rate *= 0.5
 
         feed_dict[self._learning_rate] = self.learning_rate
+
+        return feed_dict
+
+    def train(self, sess, next_input, iteration_number):
+        feed_dict = self.make_feed_dict(sess, next_input)
 
         fetches = [self.loss, self.optimizer, self._summary]
         fetches += [s[1] for s in self.summary]
@@ -88,8 +90,6 @@ class Model(object):
 
     def validate(self, sess, next_input):
         feed_dict = self.make_feed_dict(sess, next_input)
-
-        feed_dict[self._learning_rate] = self.learning_rate
 
         fetches = [self.loss, self.optimizer, self._summary]
         fetches += [s[1] for s in self.summary]
@@ -105,8 +105,6 @@ class Model(object):
 
     def evaluate(self, sess, next_input):
         feed_dict = self.make_feed_dict(sess, next_input)
-
-        feed_dict[self._learning_rate] = self.learning_rate
 
         results = sess.run(self._evaluate_targets, feed_dict=feed_dict)
         summary = sess.run([s[1] for s in self.summary], feed_dict=feed_dict)

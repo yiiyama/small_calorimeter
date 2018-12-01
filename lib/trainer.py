@@ -3,23 +3,12 @@ import importlib
 import configparser as cp
 import tensorflow as tf
 from tensorflow.python.client import timeline
+from utils.params import get_num_parameters
 
 def read_config(config_file_path, config_name):
     config_file = cp.ConfigParser()
     config_file.read(config_file_path)
     return config_file[config_name]
-
-def get_num_parameters(scope=None):
-    total_parameters = 0
-    for variable in tf.trainable_variables(scope):
-        # shape is an array of tf.Dimension
-        shape = variable.get_shape()
-        variable_parameters = 1
-        for dim in shape:
-            variable_parameters *= dim.value
-        total_parameters += variable_parameters
-    return total_parameters
-
 
 class Trainer(object):
     def __init__(self, config_file, config_name):
