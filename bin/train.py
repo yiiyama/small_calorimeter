@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 
-import setGPU
+import os
+if 'CUDA_VISIBLE_DEVICES' not in os.environ:
+    import setGPU
+
 from argparse import ArgumentParser
 
 from trainer import Trainer
