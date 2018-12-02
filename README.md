@@ -13,6 +13,7 @@ If setGPU.py is not importable, copy it from /opt/anaconda3/lib/python3.6/site-p
 Running
 =======
 
+source setup.sh # one time only just to set PYTHONPATH
 ./bin/train.py [--debug|--evaluate|--continue] <config file> <config name>
 
 <config file>s are in configs/ directory.
