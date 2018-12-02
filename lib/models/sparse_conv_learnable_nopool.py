@@ -1,20 +1,17 @@
 import tensorflow as tf
 import numpy as np
 from models.classification import ClassificationModel
-from ops.sparse_conv import construct_sparse_io_dict, sparse_max_pool
-from ops.sparse_conv_bare_max import sparse_conv_bare_max
-from ops.neighbors import indexing_tensor
-from utils.params import get_num_parameters
+from ops.sparse_conv import sparse_conv_make_neighbors2, sparse_max_pool, construct_sparse_io_dict
 
 MAXHITS = 2679
 NUM_FEATURES = 9
 SPATIAL_FEATURES = [1, 2, 3] # x, y, z
 SPATIAL_LOCAL_FEATURES = [6, 7] # vxy, vz
-OTHER_FEATURES = [0] #[0, 4] # energy, layer(???) -> [0, 4]
+OTHER_FEATURES = [0] # energy
 
-class SparseConvBareNoPoolModel(ClassificationModel):
+class SparseConvLearnableNeighborsNoPoolModel(ClassificationModel):
     def __init__(self, config):
-        ClassificationModel.__init__(self, config, 'sparse_conv_bare_nopool', 'Sparse conv with no space transformation, no pooling in between')
+        ClassificationModel.__init__(self, config, 'sparse_conv_learnable_nopool', 'Sparse conv with learnable adjacency')
 
         self._features = [
             ('rechit_data', tf.float32, [MAXHITS, NUM_FEATURES])
@@ -39,43 +36,54 @@ class SparseConvBareNoPoolModel(ClassificationModel):
 
         num_neighbors = 15
 
-        # This model does not involve any spatial transform; compute the adjacency once and for all
-        #static_indexing = indexing_tensor(spatial_features_global, num_neighbors)
-
-        print('start', features['all_features'].shape)
-        print(get_num_parameters(self.variable_scope))
-
-        # Four consecutive conv. At each step, only all_features is updated
-        
-        features = sparse_conv_bare_max(features, neighbors=num_neighbors, output_all=48)
+        features = sparse_conv_make_neighbors2(
+            features,
+            num_neighbors=num_neighbors,
+            output_all=32,
+            space_transformations=[10, 10, 10],
+            propagrate_ahead=True,
+            name='layer0'
+        )
         layer0 = features['all_features']
-        print('layer0', features['all_features'].shape)
-        print(get_num_parameters(self.variable_scope))
 
-        features = sparse_conv_bare_max(features, neighbors=num_neighbors, output_all=48)
+        features = sparse_conv_make_neighbors2(
+            features,
+            num_neighbors=num_neighbors,
+            output_all=32,
+            space_transformations=[10, 10, 10],
+            propagrate_ahead=True,
+            name='layer1'
+        )
         layer1 = features['all_features']
-        print('layer1', features['all_features'].shape)
-        print(get_num_parameters(self.variable_scope))
 
-        features = sparse_conv_bare_max(features, neighbors=num_neighbors, output_all=48)
+        features = sparse_conv_make_neighbors2(
+            features,
+            num_neighbors=num_neighbors,
+            output_all=32,
+            space_transformations=[10, 10, 10],
+            propagrate_ahead=True,
+            name='layer2'
+        )
         layer2 = features['all_features']
-        print('layer2', features['all_features'].shape)
-        print(get_num_parameters(self.variable_scope))
 
-        features = sparse_conv_bare_max(features, neighbors=num_neighbors, output_all=96)
+        features = sparse_conv_make_neighbors2(
+            features,
+            num_neighbors=num_neighbors,
+            output_all=32,
+            space_transformations=[3],
+            propagrate_ahead=False,
+            name='layer3'
+        )
         layer3 = features['all_features']
-        print('layer3', features['all_features'].shape)
-        print(get_num_parameters(self.variable_scope))
 
-        # Final output is a concat of the outputs of the layers
         x = tf.concat([layer0, layer1, layer2, layer3], axis=-1)
         print('concat', x.shape)
 
         x = tf.layers.dense(x, units=256, activation=tf.nn.relu)
-        print(get_num_parameters(self.variable_scope))
         x = tf.reduce_max(x, axis=1)
 
-        x = tf.layers.dense(x, units=128, activation=tf.nn.relu)
+#        x = tf.layers.dense(x, units=30, activation=tf.nn.relu)
+        x = tf.layers.dense(x, units=64, activation=tf.nn.relu)
         x = tf.layers.dense(x, units=self.num_classes, activation=None) # (Batch, Classes)
 
         self.logits = x

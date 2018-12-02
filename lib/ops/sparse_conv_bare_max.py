@@ -1,5 +1,5 @@
 import tensorflow as tf
-from ops.neighbors import indexing_tensor
+from ops.neighbors import indexing_tensor_2
 from ops.nn import *
 from ops.sparse_conv import construct_sparse_io_dict
 
@@ -19,7 +19,9 @@ def sparse_conv_bare_max(sparse_dict, neighbors=10, output_all=15):
                                                                                  sparse_dict['num_entries']
 
     if type(neighbors) is int:
-        _indexing_tensor = indexing_tensor(spatial_features_global, neighbors)
+        n_batch = spatial_features_global.shape[0].value
+        spatial_features_global_onebatch = spatial_features_global[0:1, ...]
+        _indexing_tensor, _ = indexing_tensor_2(spatial_features_global_onebatch, neighbors, n_batch)
     else:
         _indexing_tensor = neighbors
 

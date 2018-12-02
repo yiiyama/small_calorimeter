@@ -284,8 +284,6 @@ def sparse_conv_make_neighbors2(vertices_in, num_neighbors=10,
         trans_space = vertices_in[:,:,0:space_transformations[-1]]
 
     indexing, _ = indexing_tensor_2(trans_space, num_neighbors)
-
-    print('indexing', indexing.shape)
     
     neighbour_space = tf.gather_nd(trans_space, indexing)
     
@@ -317,7 +315,7 @@ def sparse_conv_make_neighbors2(vertices_in, num_neighbors=10,
         if edge_transformations is not None:
             concat_edges = tf.layers.dense(concat_edges, edge_transformations[i],
                                            activation=edge_activation)
-
+            
         edges = tf.layers.dense(concat_edges, 
                                 edges.shape[-1],activation=edge_activation,
                                 kernel_initializer = NoisyEyeInitializer)
@@ -330,6 +328,7 @@ def sparse_conv_make_neighbors2(vertices_in, num_neighbors=10,
                                                                    flattened_gathered.shape[1],-1])
         updated_vertices = tf.layers.dense(tf.concat([vertices_in,flattened_gathered],axis=-1), 
                                            f, activation=tf.nn.relu) 
+
 
     updated_vertices = tf.concat([trans_space,updated_vertices],axis=-1)
         
