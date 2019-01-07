@@ -46,4 +46,6 @@ source $SMALLCALO/setup.sh
 
 $SMALLCALO/bin/convert.py $FLAG $ARG $CONVERTER $PWD/$(basename $INPUT) out.tfrecords $NEVENTS
 
+CONVERTER=$(echo $CONVERTER | sed 's/.*[.]\(.*\)/\1/')
+
 xrdcp out.tfrecords root://eoscms.cern.ch//store/user/yiiyama/small_calorimeter/$CLASSES/$PROD/$CONVERTER/$(basename $INPUT | sed 's/[.]root/.tfrecords/')
