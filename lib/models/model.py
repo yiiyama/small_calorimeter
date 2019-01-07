@@ -13,8 +13,16 @@ class Model(object):
         self.learning_rate = float(config['learning_rate'])
         try:
             self.learning_rate_decay = int(config['learning_rate_decay'])
-        except:
+        except KeyError:
             self.learning_rate_decay = 0
+
+        try:
+            self.batch_norm_momentum = float(config['batch_norm_momentum'])
+        except KeyError:
+            self.batch_norm_momentum = 0.
+
+        self._learning_rate = tf.placeholder(dtype=tf.float32)
+        self._is_training = tf.placeholder(dtype=tf.bool)
 
         self._features = None
         self.keys_to_features = None
@@ -42,6 +50,12 @@ class Model(object):
         self.placeholders = []
         for name, dtype, shape in self._features:
             self.placeholders.append(tf.placeholder(dtype=dtype, shape=[self.batch_size] + shape))
+        
+    def _batch_norm(self, features):
+        if self.batch_norm_momentum > 0.:
+            return tf.layers.batch_normalization(features, training=self._is_training, momentum=self.batch_norm_momentum)
+        else:
+            return features
 
     def initialize(self):
         if self.initialized:
@@ -60,12 +74,14 @@ class Model(object):
             summary_scalars.append(tf.summary.scalar(key, value))
         self._summary = tf.summary.merge(summary_scalars)
 
-        self._learning_rate = tf.placeholder(tf.float32)
-        self.optimizer = tf.train.AdamOptimizer(learning_rate=self._learning_rate).minimize(self.loss)
+        # update ops for batch normalization does not have a direct dependency relation with the loss graph
+        update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+        with tf.control_dependencies(update_ops):
+            self.optimizer = tf.train.AdamOptimizer(learning_rate=self._learning_rate).minimize(self.loss)
 
         self.initialized = True
 
-    def make_feed_dict(self, sess, next_input):
+    def make_feed_dict(self, sess, next_input, is_training=True):
         inputs = sess.run([next_input[key] for key, _ in self.keys_to_features])
         feed_dict = dict(zip(self.placeholders, inputs))
 
@@ -73,6 +89,8 @@ class Model(object):
             self.learning_rate *= 0.5
 
         feed_dict[self._learning_rate] = self.learning_rate
+
+        feed_dict[self._is_training] = is_training
 
         return feed_dict
 
@@ -89,7 +107,7 @@ class Model(object):
         return res[:3] + [summary]
 
     def validate(self, sess, next_input):
-        feed_dict = self.make_feed_dict(sess, next_input)
+        feed_dict = self.make_feed_dict(sess, next_input, is_training=False)
 
         fetches = [self.loss, self.optimizer, self._summary]
         fetches += [s[1] for s in self.summary]
@@ -104,7 +122,7 @@ class Model(object):
         pass
 
     def evaluate(self, sess, next_input):
-        feed_dict = self.make_feed_dict(sess, next_input)
+        feed_dict = self.make_feed_dict(sess, next_input, is_training=False)
 
         results = sess.run(self._evaluate_targets, feed_dict=feed_dict)
         summary = sess.run([s[1] for s in self.summary], feed_dict=feed_dict)
