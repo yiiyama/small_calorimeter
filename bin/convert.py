@@ -2,6 +2,7 @@
 
 import sys
 import os
+import shutil
 import importlib
 from argparse import ArgumentParser
 
@@ -69,7 +70,11 @@ else:
 num_labels = len(label_branches)
 
 if args.filter:
-    selection = args.filter
+    if args.filter == 'positive_quadrant':
+        # emergency measure - can't pass quoted string in csub
+        selection = 'true_x > 0. && true_y > 0.'
+    else:
+        selection = args.filter
 else:
     selection = '1'
 
@@ -80,7 +85,12 @@ elif args.gpi_filter:
 
 full_array = rnp.tree2array(tree, feature_branches + label_branches, selection)
 
-writer = tf.python_io.TFRecordWriter(args.output,
+try:
+    TMPDIR = os.environ['TMPDIR']
+except KeyError:
+    TMPDIR = '/tmp'
+
+writer = tf.python_io.TFRecordWriter(TMPDIR + '/' + os.path.basename(args.output),
                                      options = tf.python_io.TFRecordOptions(tf.python_io.TFRecordCompressionType.GZIP))
 
 print 'Start conversion'
@@ -107,3 +117,5 @@ for event in full_array:
     writer.write(example.SerializeToString())
 
 writer.close()
+
+shutil.copyfile(TMPDIR + '/' + os.path.basename(args.output), args.output)
