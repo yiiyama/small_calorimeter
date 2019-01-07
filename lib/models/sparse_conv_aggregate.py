@@ -22,11 +22,11 @@ class SparseConvBareModel(ClassificationModel):
         spatial_features_global = tf.gather(self.placeholders[0], SPATIAL_FEATURES, axis=-1)
         spatial_features_local = tf.gather(self.placeholders[0], SPATIAL_LOCAL_FEATURES, axis=-1)
 
-        #nch_first_ten = 304 * 4 + 171 * 4 + 76 * 2
-        #
-        #other_features = other_features[:, :nch_first_ten, ...]
-        #spatial_features_global = spatial_features_global[:, :nch_first_ten, ...]
-        #spatial_features_local = spatial_features_local[:, :nch_first_ten, ...]
+        nch_first_ten = 304 * 4 + 171 * 4 + 76 * 2
+        
+        other_features = other_features[:, :nch_first_ten, ...]
+        spatial_features_global = spatial_features_global[:, :nch_first_ten, ...]
+        spatial_features_local = spatial_features_local[:, :nch_first_ten, ...]
 
         # Normalize the input
         other_features = other_features * 1.e-4
@@ -34,17 +34,19 @@ class SparseConvBareModel(ClassificationModel):
         spatial_features_local = spatial_features_local / 150.
 
         num_neighbors = 16
-        n_output = 14
+        n_output = 15
 
         self.debug('spatial', spatial_features_global)
 
         features = construct_sparse_io_dict(other_features, spatial_features_global, spatial_features_local, tf.zeros([1], dtype=tf.int64))
-        features = sparse_max_pool(features, 70)
+        #features = sparse_max_pool(features, 72)
 
         # Then redefine all_features to be really all features
         features['all_features'] = tf.concat([features['all_features'], features['spatial_features_global'], features['spatial_features_local']], axis=-1)
 
         features['all_features'] = self._batch_norm(features['all_features'])
+
+        aggr1 = tf.layers.dense()
 
         print('start', features['all_features'].shape)
 
