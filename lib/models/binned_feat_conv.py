@@ -17,6 +17,8 @@ class BinnedFeatured3DConvModel(ClassificationModel):
         # [Nbatch, Nz, Ny, Nx, Nfeat]
         x = self.placeholders[0]
 
+        x = self._batch_norm(x)
+
         x = tf.layers.conv3d(x, 50, [1, 1, 1], activation=tf.nn.relu, padding='same')
         x = tf.layers.conv3d(x, 25, [1, 1, 1], activation=tf.nn.relu, padding='same')
         x = tf.layers.conv3d(x, 25, [1, 1, 1], activation=tf.nn.relu, padding='same')
@@ -27,15 +29,21 @@ class BinnedFeatured3DConvModel(ClassificationModel):
 
         x = tf.layers.max_pooling3d(x, [2, 2, 2], strides=2) # 12, 8, 8, 18
 
+        x = self._batch_norm(x)
+
         x = tf.layers.conv3d(x, 20, [2, 3, 3], activation=tf.nn.relu, padding='same')
         x = tf.layers.conv3d(x, 25, [2, 3, 3], activation=tf.nn.relu, padding='same')
 
         x = tf.layers.max_pooling3d(x, [2, 2, 2], strides=2) # 6, 4, 4, 25
 
+        x = self._batch_norm(x)
+
         x = tf.layers.conv3d(x, 25, [2, 3, 3], activation=tf.nn.relu, padding='same')
         x = tf.layers.conv3d(x, 25, [2, 3, 3], activation=tf.nn.relu, padding='same')
 
         x = tf.layers.max_pooling3d(x, [2, 2, 2], strides=2) # 3, 2, 2, 25
+
+        x = self._batch_norm(x)
 
         x = tf.reshape(x, (self.batch_size, -1))
 
