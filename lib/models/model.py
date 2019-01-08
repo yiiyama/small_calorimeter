@@ -11,10 +11,19 @@ class Model(object):
 
         self.batch_size = int(config['batch_size'])
         self.learning_rate = float(config['learning_rate'])
+        self.learning_rate_core = self.learning_rate # used if wiggling
         try:
-            self.learning_rate_decay = int(config['learning_rate_decay'])
+            self.learning_rate_evalfreq = int(config['learning_rate_evalfreq'])
+            self.learning_rate_decayconst = float(config['learning_rate_decayconst'])
+            self.learning_rate_min = float(config['learning_rate_min'])
         except KeyError:
-            self.learning_rate_decay = 0
+            self.learning_rate_evalfreq = 0
+            self.learning_rate_decayconst = 0.
+            self.learning_rate_min = 0.
+        try:
+            self.learning_rate_wigglefreq = float(config['learning_rate_wigglefreq'])
+        except KeyError:
+            self.learning_rate_wigglefreq = 0.
 
         try:
             self.batch_norm_momentum = float(config['batch_norm_momentum'])
@@ -85,8 +94,15 @@ class Model(object):
         inputs = sess.run([next_input[key] for key, _ in self.keys_to_features])
         feed_dict = dict(zip(self.placeholders, inputs))
 
-        if self.learning_rate_decay > 0 and iteration_number > 0 and iteration_number % self.learning_rate_decay == 0:
-            self.learning_rate *= 0.5
+        if self.learning_rate_evalfreq > 0 and \
+           iteration_number > 0 and iteration_number % self.learning_rate_evalfreq == 0:
+            if self.learning_rate_core > self.learning_rate_min:
+                self.learning_rate_core *= math.exp(iteration_number * self.learning_rate_decayconst)
+
+            self.learning_rate = self.learning_rate_core
+
+            if self.learning_rate_wigglefreq > 0.:
+                self.learning_rate *= (1. + 0.5 * math.cos(self.learning_rate_wigglefreq * iteration_number))
 
         feed_dict[self._learning_rate] = self.learning_rate
 
