@@ -1,3 +1,4 @@
+import math
 import tensorflow as tf
 
 class Model(object):
@@ -10,8 +11,7 @@ class Model(object):
         self.human_name = human_name
 
         self.batch_size = int(config['batch_size'])
-        self.learning_rate = float(config['learning_rate'])
-        self.learning_rate_core = self.learning_rate # used if wiggling
+        self.learning_rate_init = float(config['learning_rate'])
         try:
             self.learning_rate_evalfreq = int(config['learning_rate_evalfreq'])
             self.learning_rate_decayconst = float(config['learning_rate_decayconst'])
@@ -90,28 +90,29 @@ class Model(object):
 
         self.initialized = True
 
-    def make_feed_dict(self, sess, next_input, is_training=True):
+    def make_feed_dict(self, sess, next_input, iteration_number=-1):
         inputs = sess.run([next_input[key] for key, _ in self.keys_to_features])
         feed_dict = dict(zip(self.placeholders, inputs))
 
-        if self.learning_rate_evalfreq > 0 and \
-           iteration_number > 0 and iteration_number % self.learning_rate_evalfreq == 0:
-            if self.learning_rate_core > self.learning_rate_min:
-                self.learning_rate_core *= math.exp(iteration_number * self.learning_rate_decayconst)
-
-            self.learning_rate = self.learning_rate_core
+        if self.learning_rate_evalfreq > 0 and iteration_number > 0 and iteration_number % self.learning_rate_evalfreq == 0:
+            evaliter = iteration_number / self.learning_rate_evalfreq
+            learning_rate = max(self.learning_rate_min, self.learning_rate_init * math.exp(-evaliter * self.learning_rate_decayconst))
 
             if self.learning_rate_wigglefreq > 0.:
-                self.learning_rate *= (1. + 0.5 * math.cos(self.learning_rate_wigglefreq * iteration_number))
+                learning_rate *= 1. + 0.5 * math.cos(self.learning_rate_wigglefreq * evaliter)
 
-        feed_dict[self._learning_rate] = self.learning_rate
+            print('New learning rate:', learning_rate)
+        else:
+            learning_rate = self.learning_rate_init
 
-        feed_dict[self._is_training] = is_training
+        feed_dict[self._learning_rate] = learning_rate
+
+        feed_dict[self._is_training] = (iteration_number >= 0)
 
         return feed_dict
 
     def train(self, sess, next_input, iteration_number):
-        feed_dict = self.make_feed_dict(sess, next_input)
+        feed_dict = self.make_feed_dict(sess, next_input, iteration_number=iteration_number)
 
         fetches = [self.loss, self.optimizer, self._summary]
         fetches += [s[1] for s in self.summary]
@@ -123,7 +124,7 @@ class Model(object):
         return res[:3] + [summary]
 
     def validate(self, sess, next_input):
-        feed_dict = self.make_feed_dict(sess, next_input, is_training=False)
+        feed_dict = self.make_feed_dict(sess, next_input)
 
         fetches = [self.loss, self.optimizer, self._summary]
         fetches += [s[1] for s in self.summary]
@@ -138,7 +139,7 @@ class Model(object):
         pass
 
     def evaluate(self, sess, next_input):
-        feed_dict = self.make_feed_dict(sess, next_input, is_training=False)
+        feed_dict = self.make_feed_dict(sess, next_input)
 
         results = sess.run(self._evaluate_targets, feed_dict=feed_dict)
         summary = sess.run([s[1] for s in self.summary], feed_dict=feed_dict)

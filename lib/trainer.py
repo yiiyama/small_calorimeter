@@ -169,12 +169,18 @@ class Trainer(object):
             if trained:
                 # Load network parameters
                 self.saver_sparse.restore(sess, self.model_path)
+            else:
+                summary_writer = tf.summary.FileWriter(self.summary_path, sess.graph)
 
             feed_dict = self.model.make_feed_dict(sess, inputs_feed)
 
             for tag, tensor in self.model._debug:
                 res, = sess.run([tensor], feed_dict = feed_dict)
                 print(tag, '=', res)
+
+            if not trained:
+                print("\n\nINFO: Saving model\n\n")
+                self.saver_sparse.save(sess, self.model_path)
 
             options = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
             run_metadata = tf.RunMetadata()
