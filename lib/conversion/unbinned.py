@@ -6,7 +6,8 @@ import tensorflow as tf
 from conversion.base import Converter
 
 class UnbinnedConverter(Converter):
-    MAXHITS = 2679
+    #MAXHITS = 2679
+    MAXHITS = 2102
     NUM_FEATURES = 9
 
     def convert(self, event):

@@ -11,7 +11,8 @@ class BinnedFeaturedConverter(Converter):
 
         self.nbinsx = 16
         self.nbinsy = 16
-        self.nbinsz = 25
+        #self.nbinsz = 25
+        self.nbinsz = 20
         self.nfeatures = 12
 
         self.xbins = np.array([-150. + i * 300. / self.nbinsx for i in range(self.nbinsx + 1)])
