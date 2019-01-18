@@ -1,29 +1,14 @@
 import tensorflow as tf
 import numpy as np
-from models.classification import ClassificationModel
-from ops.sparse_conv_2 import construct_sparse_io_dict, sparse_conv_collapse, sparse_conv_multi_neighbours, sparse_conv_global_exchange, high_dim_dense, max_pool_on_last_dimensions
+from models.sparse_conv_base import SparseConvModelBase
+from ops.sparse_conv_2 import sparse_conv_collapse, sparse_conv_multi_neighbours, sparse_conv_global_exchange, high_dim_dense, max_pool_on_last_dimensions
 from ops.sparse_conv import sparse_max_pool
 
-MAXHITS = 2102
-NUM_FEATURES = 9
-SPATIAL_GLOBAL_FEATURES = [1, 2, 3] # x, y, z
-SPATIAL_LOCAL_FEATURES = [6, 7] # vxy, vz
-OTHER_FEATURES = [0] # energy, layer(???) -> [0, 4]
-
-class SparseConvSingleNeighborsModel(ClassificationModel):
+class SparseConvSingleNeighborsModel(SparseConvModelBase):
     def __init__(self, config):
-        ClassificationModel.__init__(self, config, 'sparse_conv_single_neighbors', 'Single neighbors')
-
-        self._features = [
-            ('rechit_data', tf.float32, [MAXHITS, NUM_FEATURES])
-        ]
+        SparseConvModelBase.__init__(self, config, 'sparse_conv_single_neighbors', 'Single neighbors')
         
-    def _make_network(self):
-        other_features = tf.gather(self.placeholders[0], OTHER_FEATURES, axis=-1)
-        spatial_features_global = tf.gather(self.placeholders[0], SPATIAL_GLOBAL_FEATURES, axis=-1)
-        spatial_features_local = tf.gather(self.placeholders[0], SPATIAL_LOCAL_FEATURES, axis=-1)
-
-        feat = construct_sparse_io_dict(other_features, spatial_features_global, spatial_features_local, tf.zeros([1], dtype=tf.int64))
+    def _make_sparse_conv_network(self, feat):
         #feat = sparse_max_pool(feat, 70)
         feat = sparse_conv_collapse(feat)
 
