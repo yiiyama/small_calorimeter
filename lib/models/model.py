@@ -44,6 +44,8 @@ class Model(object):
         self.summary = [] # [(name, scalar)]
         self._summary = None
 
+        self._evaluate_targets = []
+
         self._debug = [] # [(tag, tensor)]
 
         self.plot_dir = config['plot_dir']
@@ -77,6 +79,8 @@ class Model(object):
             self._make_network()
         self._make_loss()
         self._make_summary()
+
+        self.summary.append(('LearningRate', self._learning_rate))
 
         summary_scalars = []
         for key, value in self.summary:
