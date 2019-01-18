@@ -84,6 +84,11 @@ class ClassificationModel(Model):
                 self._evaluate_targets.append(pred_correct)
                 self._evaluate_targets.append(pred_incorrect)
 
+        self._classification_add_evaluate_targets()
+
+    def _classification_add_evaluate_targets(self):
+        pass
+
     def init_evaluate(self):
         self.n_correct = []
         self.n_incorrect = []
@@ -94,9 +99,14 @@ class ClassificationModel(Model):
             self.n_incorrect.append(np.zeros((NTHRES,), dtype=np.float64))
             self.n_class.append(0)
 
+        self._classification_more_init_evaluate()
+
+    def _classification_more_init_evaluate(self):
+        pass
+
     def _do_evaluate(self, results, summary_dict):
         if self.num_classes == 2:
-            pred_correct, pred_incorrect = results
+            pred_correct, pred_incorrect = results[:2]
 
             n_true = np.shape(pred_correct)[0]
             n_fake = np.shape(pred_incorrect)[0]
@@ -125,8 +135,13 @@ class ClassificationModel(Model):
                 for ient in range(n_fake):
                     self.n_incorrect[icls] += pred_incorrect[ient]
 
+        self._classification_more_do_evaluate(results, summary_dict)
+
+    def _classification_more_do_evaluate(self, results, summary_dict):
+        pass
+
     def print_evaluation_result(self):
-        import matplotlib.pyplot as plt
+        #import matplotlib.pyplot as plt
 
         data = []
 
@@ -134,19 +149,19 @@ class ClassificationModel(Model):
             self.n_correct[icls] /= self.n_class[icls]
             self.n_incorrect[icls] /= sum(n for i, n in enumerate(self.n_class) if i != icls)
 
-            plt.figure()
-            lw = 2
-            plt.plot(self.n_incorrect[icls], self.n_correct[icls], color='darkorange',
-                     lw=lw, label='ROC curve')
-            plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
-            plt.xlim([0.0, 1.0])
-            plt.ylim([0.0, 1.05])
-            plt.xlabel('False Positive Rate')
-            plt.ylabel('True Positive Rate')
-            plt.title('Class %d identification' % icls)
-            plt.legend(loc="lower right")
-            plt.savefig('%s/%s_roc_%d.pdf' % (self.plot_dir, self.variable_scope, icls))
-            plt.savefig('%s/%s_roc_%d.png' % (self.plot_dir, self.variable_scope, icls))
+            #plt.figure()
+            #lw = 2
+            #plt.plot(self.n_incorrect[icls], self.n_correct[icls], color='darkorange',
+            #         lw=lw, label='ROC curve')
+            #plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
+            #plt.xlim([0.0, 1.0])
+            #plt.ylim([0.0, 1.05])
+            #plt.xlabel('False Positive Rate')
+            #plt.ylabel('True Positive Rate')
+            #plt.title('Class %d identification' % icls)
+            #plt.legend(loc="lower right")
+            #plt.savefig('%s/%s_roc_%d.pdf' % (self.plot_dir, self.variable_scope, icls))
+            #plt.savefig('%s/%s_roc_%d.png' % (self.plot_dir, self.variable_scope, icls))
 
             correct = np.expand_dims(self.n_correct[icls], 0)
             incorrect = np.expand_dims(self.n_incorrect[icls], 0)
@@ -156,3 +171,8 @@ class ClassificationModel(Model):
                 break
 
         np.save('%s/%s_roc.npy' % (self.data_dir, self.variable_scope), np.concatenate(data))
+
+        self._classification_more_print_result()
+
+    def _classification_more_print_result(self):
+        pass
