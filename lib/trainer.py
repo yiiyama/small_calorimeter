@@ -129,7 +129,7 @@ class Trainer(object):
         self.initialize()
         self.model.init_evaluate()
 
-        inputs_feed = self.get_input_feeds(self.test_files)
+        inputs_feed = self.get_input_feeds(self.test_files, repeat=False)
 
         init = [tf.global_variables_initializer(), tf.local_variables_initializer()]
         with tf.Session() as sess:
