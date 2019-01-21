@@ -1,9 +1,6 @@
 #!/usr/bin/env python
 
 import os
-if 'CUDA_VISIBLE_DEVICES' not in os.environ:
-    import setGPU
-
 from argparse import ArgumentParser
 
 from trainer import Trainer
@@ -17,6 +14,9 @@ parser.add_argument('--continue', '-C', action = 'store_true', dest = 'use_saved
 parser.add_argument('--run-for', '-i', dest = 'run_for', type = int, default = 100, help='Number of evaluation iterations')
 
 args = parser.parse_args()
+
+if 'CUDA_VISIBLE_DEVICES' not in os.environ:
+    import setGPU
 
 trainer = Trainer(args.input, args.config)
 
