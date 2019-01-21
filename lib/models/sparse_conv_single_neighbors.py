@@ -18,7 +18,6 @@ class SparseConvSingleNeighborsModel(SparseConvModelBase):
 
         propagate=18
         dimensions=4 
-        neighbours=40
 
         nsensors = [
             (1024, 40, 24),
@@ -45,7 +44,8 @@ class SparseConvSingleNeighborsModel(SparseConvModelBase):
                                                 plus_mean=True)
 
             feat = self._batch_norm(feat)
-            feat = max_pool_on_last_dimensions(feat, nsen)
+            if nsen != feat.shape[1]:
+                feat = max_pool_on_last_dimensions(feat, nsen)
             #feat_list.append(feat)
 
         #feat =  tf.concat(feat_list,axis=-1)

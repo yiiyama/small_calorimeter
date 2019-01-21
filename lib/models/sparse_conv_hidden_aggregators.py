@@ -34,7 +34,8 @@ class SparseConvHiddenAggregatorsModel(SparseConvModelBase):
                                                   plus_mean=True
                                                   )
             feat = self._batch_norm(feat)
-            feat = max_pool_on_last_dimensions(feat, nsensors[i])
+            if nsensors[i] != feat.shape[1]:
+                feat = max_pool_on_last_dimensions(feat, nsensors[i])
             
         print(feat.shape)
         feat = tf.reshape(feat, (self.batch_size, -1))
