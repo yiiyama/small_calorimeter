@@ -1,5 +1,6 @@
 import os
 import importlib
+import random
 import configparser as cp
 import tensorflow as tf
 from tensorflow.python.client import timeline
@@ -53,6 +54,8 @@ class Trainer(object):
         with open(files_list) as f:
             file_paths = [x.strip() for x in f.readlines()]
 
+        random.shuffle(file_paths)
+
         dataset = tf.data.TFRecordDataset(file_paths, compression_type='GZIP') \
                          .map(self._parse_one_input)
 
@@ -93,6 +96,8 @@ class Trainer(object):
                 print("\n\nINFO: Loading model\n\n")
                 with open(self.model_path + '.txt', 'r') as f:
                     iteration_number = int(f.read())
+
+                self.model.set_learning_rate(iteration_number)
             else:
                 iteration_number = 0
 

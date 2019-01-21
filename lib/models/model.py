@@ -25,6 +25,8 @@ class Model(object):
         except KeyError:
             self.learning_rate_wigglefreq = 0.
 
+        self.learning_rate = self.learning_rate_init
+
         try:
             self.batch_norm_momentum = float(config['batch_norm_momentum'])
         except KeyError:
@@ -99,17 +101,9 @@ class Model(object):
         feed_dict = dict(zip(self.placeholders, inputs))
 
         if self.learning_rate_evalfreq > 0 and iteration_number > 0 and iteration_number % self.learning_rate_evalfreq == 0:
-            evaliter = iteration_number / self.learning_rate_evalfreq
-            learning_rate = max(self.learning_rate_min, self.learning_rate_init * math.exp(-evaliter * self.learning_rate_decayconst))
+            self.set_learning_rate(iteration_number)
 
-            if self.learning_rate_wigglefreq > 0.:
-                learning_rate *= 1. + 0.5 * math.cos(self.learning_rate_wigglefreq * evaliter)
-
-            print('New learning rate:', learning_rate)
-        else:
-            learning_rate = self.learning_rate_init
-
-        feed_dict[self._learning_rate] = learning_rate
+        feed_dict[self._learning_rate] = self.learning_rate
 
         feed_dict[self._is_training] = (iteration_number >= 0)
 
@@ -141,6 +135,19 @@ class Model(object):
 
     def init_evaluate(self):
         pass
+
+    def set_learning_rate(self, iteration_number):
+        if self.learning_rate_evalfreq > 0:
+            evaliter = iteration_number / self.learning_rate_evalfreq
+            self.learning_rate = max(self.learning_rate_min, self.learning_rate_init * math.exp(-evaliter * self.learning_rate_decayconst))
+
+            if self.learning_rate_wigglefreq > 0.:
+                self.learning_rate *= 1. + 0.5 * math.cos(self.learning_rate_wigglefreq * evaliter)
+
+        else:
+            self.learning_rate = self.learning_rate_init
+
+        print('New learning rate:', self.learning_rate)
 
     def evaluate(self, sess, next_input):
         feed_dict = self.make_feed_dict(sess, next_input)
