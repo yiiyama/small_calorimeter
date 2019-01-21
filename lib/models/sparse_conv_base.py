@@ -1,5 +1,6 @@
 import tensorflow as tf
 import numpy as np
+import h5py
 from models.classification import ClassificationModel
 from ops.sparse_conv_2 import construct_sparse_io_dict
 
@@ -53,12 +54,6 @@ class SparseConvModelBase(ClassificationModel):
 
         self._evaluate_targets.append(z_emean)
 
-        argmax_labels = tf.argmax(self.placeholders[-1], axis=1)
-        prediction = tf.argmax(self.logits, axis=1)
-        pred_correct = tf.equal(argmax_labels, prediction)
-
-        self._evaluate_targets.append(pred_correct)
-
     def _classification_more_init_evaluate(self):
         self._energy_binning = np.arange(0., 110., 10., dtype=np.float32)
         self._energy_bin_all = np.zeros(np.shape(self._energy_binning)[0])
@@ -72,21 +67,34 @@ class SparseConvModelBase(ClassificationModel):
         self._z_bin_all = np.zeros(np.shape(self._z_binning)[0])
         self._z_bin_correct = np.zeros(np.shape(self._z_binning)[0])
 
+        self._ntuples_file = h5py.File('%s/%s_ntuples.py' % (self.data_dir, self.variable_scope), 'w')
+        self._ntuples = self._ntuples_file.create_dataset('ntuples', (0, 5), maxshape=(None, 5), chunks=(self.batch_size, 5))
+
     def _classification_more_do_evaluate(self, results, summary_dict):
-        total_energy, sigma_r, z_emean, pred_correct = results[-4:]
+        # limiting to num_classes 2
+        truth, prob = results[:2]
+        total_energy, sigma_r, z_emean = results[-3:]
+
+        self._ntuples.resize(self._ntuples.shape[0] + self.batch_size, axis=0)
+
+        row = []
+        for elem in (truth.astype(np.float32), prob, total_energy, sigma_r, z_emean):
+            row.append(np.reshape(elem, (self.batch_size, 1)))
+
+        self._ntuples[-self.batch_size:] = np.concatenate(row, axis=1)
 
         energy_bins = np.searchsorted(self._energy_binning, total_energy)
         sigma_bins = np.searchsorted(self._sigma_binning, sigma_r)
         z_bins = np.searchsorted(self._z_binning, z_emean)
 
         for iex in range(self.batch_size):
-            correct = (pred_correct[iex] != 0)
+            correct = (truth[iex] == 1 and prob[iex] >= 0.5) or (truth[iex] == 0 and prob[iex] < 0.5)
 
             b = energy_bins[iex]
             if b < 0 or b >= len(self._energy_binning):
                 print('OOB energy', total_energy[iex])
                 continue
-                
+
             self._energy_bin_all[b] += 1
             if correct:
                 self._energy_bin_correct[b] += 1
@@ -111,6 +119,8 @@ class SparseConvModelBase(ClassificationModel):
 
     def _classification_more_print_result(self):
         print('More results!')
+
+        self._ntuples_file.close()
 
         data = []
         

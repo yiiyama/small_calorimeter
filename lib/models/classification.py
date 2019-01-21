@@ -41,10 +41,10 @@ class ClassificationModel(Model):
         self.softmax = tf.nn.softmax(self.logits)
 
     def _make_summary(self):
-        self.summary = [
+        self.summary.extend([
             ('Loss', self.loss),
             ('Accuracy', self.accuracy)
-        ]
+        ])
 
         thresholds = tf.constant([[0.005 * x for x in range(NTHRES)]]) # (1, NTHRES)
         self._evaluate_targets = []
@@ -52,6 +52,9 @@ class ClassificationModel(Model):
         if self.num_classes == 2:
             truth = tf.gather(tf.cast(self.placeholders[-1], tf.int32), [0], axis=1) # (N_batch, 1)
             prob = tf.gather(self.softmax, [0], axis=1) # (N_batch, 1)
+
+            self._evaluate_targets.append(tf.reshape(truth, (self.batch_size,)))
+            self._evaluate_targets.append(tf.reshape(prob, (self.batch_size,)))
 
             roc_auc, auc_update = tf.metrics.auc(truth, prob)
             self.summary.append(('ROCAUC', auc_update))
@@ -67,6 +70,9 @@ class ClassificationModel(Model):
             self._evaluate_targets.append(pred_incorrect)
 
         else:
+            self._evaluate_targets.append(tf.reshape(tf.cast(self.placeholders[-1], tf.int32), (self.batch_size,)))
+            self._evaluate_targets.append(tf.reshape(self.softmax, (self.batch_size,)))
+
             for icls in range(self.num_classes):
                 truth = tf.gather(tf.cast(self.placeholders[-1], tf.int32), [icls], axis=1) # (N_batch, 1)
                 prob = tf.gather(self.softmax, [icls], axis=1) # (N_batch, 1)
@@ -106,7 +112,7 @@ class ClassificationModel(Model):
 
     def _do_evaluate(self, results, summary_dict):
         if self.num_classes == 2:
-            pred_correct, pred_incorrect = results[:2]
+            pred_correct, pred_incorrect = results[2:4]
 
             n_true = np.shape(pred_correct)[0]
             n_fake = np.shape(pred_incorrect)[0]
@@ -122,7 +128,7 @@ class ClassificationModel(Model):
 
         else:
             for icls in range(self.num_classes):
-                pred_correct, pred_incorrect = results[icls * 2:icls * 2 + 2]
+                pred_correct, pred_incorrect = results[icls * 2 + 2:icls * 2 + 4]
     
                 n_true = np.shape(pred_correct)[0]
                 n_fake = np.shape(pred_incorrect)[0]
