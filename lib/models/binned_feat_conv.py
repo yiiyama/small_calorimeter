@@ -52,3 +52,6 @@ class BinnedFeatured3DConvModel(ClassificationModel):
         x = tf.layers.dense(x, units=self.num_classes, activation=None) # (Batch, Classes)
 
         self.logits = x
+
+        self.summary.append(('Logit 0', self.logits[0][0]))
+        self.summary.append(('Logit 1', self.logits[0][1]))
