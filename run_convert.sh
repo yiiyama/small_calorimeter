@@ -19,21 +19,26 @@ export PYTHONPATH=$SMALLCALO/lib:$PYTHONPATH
 
 if [ $CLS = "epi" ]
 then
-  CLASSES="electron_pion"
+  CLASS="electron_pion"
   FLAG="-F"
   ARG=""
 elif [ $CLS = "gpi" ]
 then
-  CLASSES="gamma_pion"
+  CLASS="gamma_pion"
   FLAG="-G"
   ARG=""
+elif [ $CLS = "gpir" ]
+then
+  CLASS="gamma_pion_reverse"
+  FLAG="-G"
+  ARG="-R"
 elif [ $CLS = "easy" ]
 then
-  CLASSES="gamma_pion_easy"
+  CLASS="gamma_pion_easy"
   FLAG="-F"
   ARG='-f "true_energy < 10 && true_x > 0 && true_y > 0"'
 else
-  CLASSES="all"
+  CLASS="all"
   FLAG=""
   ARG=""
 fi
@@ -48,4 +53,4 @@ $SMALLCALO/bin/convert.py $FLAG $ARG $CONVERTER $PWD/$(basename $INPUT) out.tfre
 
 CONVERTER=$(echo $CONVERTER | sed 's/.*[.]\(.*\)/\1/')
 
-xrdcp out.tfrecords root://eoscms.cern.ch//store/user/yiiyama/small_calorimeter/$CLASSES/$PROD/$CONVERTER/$(basename $INPUT | sed 's/[.]root/.tfrecords/')
+xrdcp out.tfrecords root://eoscms.cern.ch//store/user/yiiyama/small_calorimeter/$CLASS/$PROD/$CONVERTER/$(basename $INPUT | sed 's/[.]root/.tfrecords/')

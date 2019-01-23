@@ -13,6 +13,7 @@ parser.add_argument('output', help="Output file name")
 parser.add_argument('nevents', nargs = '?', default = -1, type = int, help = 'Number of events to process')
 parser.add_argument('--epi-filter', '-F', action = 'store_true', dest = 'epi_filter', help = 'Select events with electron or neutral pion only.')
 parser.add_argument('--gpi-filter', '-G', action = 'store_true', dest = 'gpi_filter', help = 'Select events with photon or neutral pion only.')
+parser.add_argument('--reverse', '-R', action = 'store_true', dest = 'reverse', help = 'Reverse the event labels (for binary classification only).')
 parser.add_argument('--filter', '-f', dest = 'filter', help = 'Arbitrary filter expression.')
 args = parser.parse_args()
 
@@ -53,10 +54,16 @@ if args.epi_filter:
         'isPionNeutral'
     ]
 elif args.gpi_filter:
-    label_branches = [
-        'isGamma',
-        'isPionNeutral'
-    ]
+    if args.reverse:
+        label_branches = [
+            'isPionNeutral',
+            'isGamma'
+        ]
+    else:
+        label_branches = [
+            'isGamma',
+            'isPionNeutral'
+        ]
 else:
     label_branches = [
         'isElectron',
