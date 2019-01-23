@@ -105,7 +105,7 @@ class Trainer(object):
             while iteration_number < self.train_for_iterations:
                 try:
                     loss, _, summary_data, summary = self.model.train(sess, inputs_feed, iteration_number)
-                except tf.errors.OutOfRangeError:
+                except (tf.errors.OutOfRangeError, ValueError):
                     break
 
                 summary_writer.add_summary(summary_data, iteration_number)
@@ -142,7 +142,7 @@ class Trainer(object):
             while ibatch != nbatches:
                 try:
                     self.model.evaluate(sess, inputs_feed)
-                except tf.errors.OutOfRangeError:
+                except (tf.errors.OutOfRangeError, ValueError):
                     break
 
                 ibatch += 1
