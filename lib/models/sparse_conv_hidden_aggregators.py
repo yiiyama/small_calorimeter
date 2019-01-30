@@ -15,17 +15,21 @@ class SparseConvHiddenAggregatorsModel(SparseConvModelBase):
         feat = zero_out_by_energy(feat)
         feat = self._batch_norm(feat)
         
-        aggregators = 7*[4]  
-        filters =     7*[40]
-        nsensors =    [1024] + [512] + (3*[64]) + [32, 1]
-        propagate =   7*[32]
-        pre_filters = 7*[[]]
+        nsensors = [1024, 1024, 1024, 1024, 1024, 512, 512, 512, 64, 64, 32, 32, 1]
+        nlayers = len(nsensors)
+
+        aggregators = [4] * nlayers
+        filters =     [36] * nlayers
+        #nsensors =    [1024] + [512] + (3*[64]) + [32, 1]
+        #nsensors =    [1024, 512, 256, 256, 32, 32, 16, 1]
+        propagate =   [16] * nlayers
+        pre_filters = [[]] * nlayers
         
         feat = sparse_conv_global_exchange(feat)
         feat = self._batch_norm(feat)
-        feat = high_dim_dense(feat,32, activation=tf.nn.tanh)
+        feat = high_dim_dense(feat, 32, activation=tf.nn.tanh)
         feat_list=[]
-        for i in range(len(filters)):
+        for i in range(nlayers):
             feat = sparse_conv_hidden_aggregators(feat, 
                                                   aggregators[i],
                                                   n_filters=filters[i],
@@ -36,6 +40,8 @@ class SparseConvHiddenAggregatorsModel(SparseConvModelBase):
             feat = self._batch_norm(feat)
             if nsensors[i] != feat.shape[1]:
                 feat = max_pool_on_last_dimensions(feat, nsensors[i])
+
+            #feat = high_dim_dense(feat, 32, activation=tf.nn.tanh)
             
         print(feat.shape)
         feat = tf.reshape(feat, (self.batch_size, -1))

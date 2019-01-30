@@ -20,8 +20,8 @@ class SparseConvSingleNeighborsModel(SparseConvModelBase):
         dimensions=4 
 
         nsensors = [
+            (1024, 40, 16),
             (1024, 40, 24),
-            (512, 40, 24),
             (256, 40, 32),
             (128, 40, 32),
             (32, 40, 64),
