@@ -1284,7 +1284,8 @@ def sparse_conv_hidden_aggregators(vertices_in,
                                    n_filters,
                                    pre_filters=[],
                                    n_propagate=-1,
-                                   plus_mean=False
+                                   plus_mean=False,
+                                   return_agg=False
                                    ):   
     vertices_in_orig = vertices_in
     trans_vertices = vertices_in
@@ -1312,7 +1313,7 @@ def sparse_conv_hidden_aggregators(vertices_in,
     if plus_mean:
         vertices_in_collapsed= tf.concat([vertices_in_collapsed,vertices_in_mean_collapsed],axis=-1 )
     print('vertices_in_collapsed',vertices_in_collapsed.shape)
-    
+
     edges = tf.transpose(edges, perm=[0,2, 1,3]) # [BxVxV'xF]
     
     expanded_collapsed = apply_edges(vertices_in_collapsed, edges, reduce_sum=False, flatten=True)# [BxVxF]
@@ -1325,8 +1326,12 @@ def sparse_conv_hidden_aggregators(vertices_in,
     
     #merged_out = tf.layers.dense(expanded_collapsed,n_filters,activation=tf.nn.tanh)
     merged_out = high_dim_dense(expanded_collapsed,n_filters,activation=tf.nn.tanh)
-    
-    return merged_out
+
+    if return_agg:    
+        return merged_out, vertices_in_collapsed
+    else:
+        return merged_out
+
     
     
 def sparse_conv_multi_neighbours(vertices_in,
@@ -1392,12 +1397,92 @@ def sparse_conv_multi_neighbours(vertices_in,
     #
     
 
+def sparse_conv_multi_neighbours_reference(vertices_in,
+                                   n_neighbours,
+                                   n_dimensions,
+                                   n_filters,
+                                   n_propagate=-1):
+    
+    return sparse_conv_multi_neighbours(vertices_in,
+                                   n_neighbours,
+                                   n_dimensions,
+                                   n_filters,
+                                   n_propagate=n_propagate,
+                                   individual_conv=False,
+                                   total_distance=True,
+                                   plus_mean=True)
 
 
 
+def sparse_conv_hidden_aggregators_reference(vertices_in,
+                                   n_aggregators,
+                                   n_filters,
+                                   n_propagate=-1
+                                   ):
+    return sparse_conv_hidden_aggregators(vertices_in,
+                                   n_aggregators,
+                                   n_filters,
+                                   pre_filters=[],
+                                   n_propagate=n_propagate,
+                                   plus_mean=True
+                                   )
 
 
+    
+    
+
+import readers.indices_calculated as ic    
+def construct_binning16(vertices_in):
+    
+    batch_size = int(vertices_in.shape[0])
+    max_entries = int(vertices_in.shape[1])
+    nfeat = int(vertices_in.shape[2])
+    
+    
+    batch_indices = np.arange(batch_size)
+    batch_indices = np.tile(batch_indices[..., np.newaxis], reps=(1, max_entries))[..., np.newaxis]
+
+    indexing_array = \
+        np.concatenate((ic.x_bins_beta_calo_16[:, np.newaxis], ic.y_bins_beta_calo_16[:, np.newaxis], ic.l_bins_beta_calo_16[:, np.newaxis],
+                        ic.d_indices_beta_calo_16[:, np.newaxis]),
+                       axis=1)[np.newaxis, ...]
+
+    indexing_array = np.tile(indexing_array, reps=[batch_size, 1, 1])
+    indexing_array = np.concatenate((batch_indices, indexing_array), axis=2).astype(np.int64)
 
 
+    indexing_array2 = \
+        np.concatenate((ic.x_bins_beta_calo[:, np.newaxis], ic.y_bins_beta_calo[:, np.newaxis], ic.l_bins_beta_calo[:, np.newaxis],
+                        ic.d_indices_beta_calo[:, np.newaxis]),
+                       axis=1)[np.newaxis, ...]
+
+    indexing_array2 = np.tile(indexing_array2, reps=[batch_size, 1, 1])
+    indexing_array2 = np.concatenate((batch_indices, indexing_array2), axis=2).astype(np.int64)
+
+    result = tf.scatter_nd(indexing_array, vertices_in, shape=(batch_size, 16, 16, 20, 4, nfeat ))
+    result = tf.reshape(result, [batch_size, 16, 16, 20, -1])
+
+    return result, indexing_array
+    
+def sparse_conv_global_exchange_binned(binned_in):
+    in_shape = binned_in.shape.as_list()
+    reshaped = tf.reshape(binned_in, [in_shape[0], -1, in_shape[-1]])
+    reshaped = sparse_conv_global_exchange(reshaped)
+    out =  tf.reshape(reshaped,in_shape[:-1]+[2*in_shape[-1]])
+    return out
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     
     

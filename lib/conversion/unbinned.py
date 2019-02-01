@@ -9,9 +9,17 @@ class UnbinnedConverter(Converter):
     #MAXHITS = 2679
     MAXHITS = 2102
     NUM_FEATURES = 9
+    SHUFFLE = False
 
     def convert(self, event):
         rechits = np.concatenate([np.expand_dims(event[i].astype(np.float32), axis = 1) for i in xrange(UnbinnedConverter.NUM_FEATURES)], axis = 1)
+
+        print(rechits)
+
+        if self.SHUFFLE:
+            np.random.shuffle(rechits)
+
+        print(rechits)
 
         rechit_data = tf.train.FloatList(value = rechits.flatten())
     
@@ -31,3 +39,6 @@ class UnbinnedConverter(Converter):
         print(type(example['labels_one_hot']))
         print(np.shape(example['labels_one_hot']))
         print(example['labels_one_hot'])
+
+class UnbinnedShuffledConverter(UnbinnedConverter):
+    SHUFFLE = True
